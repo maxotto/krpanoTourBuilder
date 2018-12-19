@@ -82,6 +82,7 @@ class Services extends EventEmitter {
 			if (modules) {
 				modules.keys().map(function(module) {
 					logger.info("  Load", path.relative(path.join(__dirname, "..", "applogic", "modules"), module), "service...");
+					console.log("  Load", path.relative(path.join(__dirname, "..", "applogic", "modules"), module), "service...");
 					addService(modules(module));
 				});
 			}
@@ -101,6 +102,7 @@ class Services extends EventEmitter {
 	 * @param  {Object} app ExpressJS instance
 	 */
 	registerRoutes(app) {
+		console.log('Register routes');
 		let self = this;
 
 		//logger.info("Register routes ", this.services);
@@ -116,8 +118,8 @@ class Services extends EventEmitter {
 
 				let lastRoutes = [];
 
+				console.log(service.actions);
 				_.forIn(service.actions, (actionFunc, name) => {
-
 					let action = actionFunc.settings;
 					action.handler = actionFunc;
 

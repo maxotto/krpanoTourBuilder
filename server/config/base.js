@@ -139,9 +139,9 @@ module.exports = {
 		},
 
 		file: {
-			enabled: false,
+			enabled: true,
 			path: path.join(global.rootPath, "logs"),
-			level: "info",
+			level: "info debug",
 			json: false,
 			exceptionFile: true
 		},

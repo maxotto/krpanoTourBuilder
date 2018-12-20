@@ -5,11 +5,6 @@
 			<v-content>
 				<v-container fluid>
 					<v-btn color="primary" dark class="mb-2" @click="prepareCreate">New project</v-btn>
-					<span class="group pa-2">
-						<v-icon>home</v-icon>
-						<v-icon>event</v-icon>
-						<v-icon>info</v-icon>
-					</span>
 					<v-dialog v-model="dialog" max-width="1024" >
 						<v-card>
 							<v-card-title>

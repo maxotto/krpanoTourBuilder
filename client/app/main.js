@@ -4,6 +4,19 @@ require("es6-promise/auto");
 
 import Vue from "vue";
 
+import "./core/vuetify";
+
+import * as VueGoogleMaps from "vue2-google-maps";
+Vue.use(VueGoogleMaps, {
+	load: {
+		key: "AIzaSyARIMiX_C7rE4U-pM6nih2n2z2z0YfhrfY",
+		libraries: "places",
+	},
+});
+
+import uploader from "vue-simple-uploader";
+Vue.use(uploader);
+
 import axios from "axios";
 axios.defaults.headers.post["Content-Type"] = "application/json";
 

@@ -1,32 +1,235 @@
 <template>
 	<div>
-		<h1>PROJECTS</h1>
+		<h1>My krpano projects</h1>
+		<v-app class="v-app">
+			<v-content>
+				<v-container fluid>
+					<v-btn color="primary" dark class="mb-2" @click="prepareCreate">New project</v-btn>
+					<span class="group pa-2">
+						<v-icon>home</v-icon>
+						<v-icon>event</v-icon>
+						<v-icon>info</v-icon>
+					</span>
+					<v-dialog v-model="dialog" max-width="1024" >
+						<v-card>
+							<v-card-title>
+								<span class="headline">{{dlgTitle}}</span>
+								{{editedItem.state}}
+							</v-card-title>
 
-		<admin-page :schema="schema" :selected="selected" :rows="projects"></admin-page>
+							<v-card-text>
+								<div>
+									<v-layout row wrap>
+										<v-flex xs6>
+											<v-layout wrap row>
+												<v-flex xs12>
+													<v-text-field v-model="editedItem.title" label="Title"></v-text-field>
+												</v-flex>
+												<v-flex xs12>
+													<v-text-field v-model="editedItem.address" label="Address"></v-text-field>
+												</v-flex>
+												<v-flex xs12>
+													<v-select
+														:items="templatesList"
+														label="Select template to generate"
+														v-model="editedItem.template"
+													></v-select>
+												</v-flex>
+												<v-flex xs6>
+													<v-checkbox
+														:label="`Show map button`"
+														v-model="editedItem.showMap"
+													></v-checkbox>
+												</v-flex>
+												<v-flex xs6>
+													<v-checkbox
+														:label="`Use custom map`"
+														v-model="editedItem.useCustomMap"
+													></v-checkbox>
+												</v-flex>
+												<v-flex xs12>
+													<v-text-field v-model="editedItem.loadingtext" label="Loading text"></v-text-field>
+												</v-flex>
+												<v-flex xs12>
+													{{editedItem.location}}
+												</v-flex>
+												<v-flex xs12>
+													<br>
+													<span style="color: red"><b>Upload files</b></span>
+												</v-flex>
+											</v-layout>
+										</v-flex>
+										<v-flex xs6>
+											<div style="width: 510px; height: 510px; padding: 15px">
+												<GmapMap :center="editedItem.location" :zoom="14" style="width: 480px; height: 480px">
+													<GmapMarker
+														:position="markerLocation"
+														:clickable="true"
+														:draggable="true"
+														@dragend="dragEnd"
+														@drag="updateCoordinates"
+													></GmapMarker>
+												</GmapMap>
+											</div>
+										</v-flex>
+									</v-layout>
+
+								</div>
+							</v-card-text>
+							<v-card-actions>
+								<v-spacer></v-spacer>
+								<v-btn color="blue darken-1" flat @click.native="dlgCancel">Cancel</v-btn>
+								<v-btn color="blue darken-1" :disabled="!canSaveNew" flat @click.native="dlgSave">Save</v-btn>
+							</v-card-actions>
+						</v-card>
+					</v-dialog>
+					<v-data-table
+						:headers="headers"
+						:items="projects"
+						hide-actions
+						class="elevation-1"
+					>
+						<template slot="items" slot-scope="props">
+							<tr>
+								<td class="text-xs-center">{{ props.item.title }}</td>
+								<td class="text-xs-center">{{ props.item.address }}</td>
+								<td class="text-xs-center">{{ props.item.template }}</td>
+								<td class="justify-center layout px-0">
+									<action-buttons
+										:state="props.item.state"
+										:id="props.item._id"
+										@unzipped="unzipped"
+									></action-buttons>
+									<v-icon
+										small
+										class="mr-2"
+										@click="editItem(props.item)"
+									>
+										mdi-pencil
+									</v-icon>
+									<v-icon
+										small
+										@click="deleteItem(props.item)"
+									>
+										mdi-delete
+									</v-icon>
+
+								</td>
+							</tr>
+						</template>
+					</v-data-table>
+					<v-btn color="success">Success</v-btn>
+					<v-btn color="error">Error</v-btn>
+					<v-btn color="warning">Warning</v-btn>
+					<v-btn color="info">Info</v-btn>
+				</v-container>
+			</v-content>
+
+		</v-app>
 	</div>
 </template>
 
 <script>
-	import AdminPage from "../../core/DefaultAdminPage.vue";
+	import ActionButtons from "./components/actionButtons.vue";
 	import { mapGetters, mapActions } from "vuex";
 	import schema from "./schema";
 
 	export default {
 		data() {
 			return {
-				schema
+				headers: [
+					{
+						text: "Title",
+						value: "title",
+						align: "center"
+					},
+					{ text: "Address", value: "address", align: "center" },
+					{ text: "Template", value: "template", align: "center" },
+					{ text: "Actions", value: "_id", sortable: false, align: "center"},
+				],
+				dialog: false,
+				dlgTitle: "",
+				editedIndex: -1,
+				editedItem: {
+					id: null,
+					title: "",
+					address: "",
+					template: "First",
+					showMap: true,
+					useCustomMap: true,
+					language: "en",
+					loadingtext: "",
+					googleMapUnits: "imperial",
+					useFixedZoom: true,
+					iniZoom: 17,
+					location: {
+						lat: 43.6567919,
+						lng: -79.6010328,
+					},
+					state: {},
+					tour: "{}"
+				},
+				newItem: {
+					id: null,
+					title: "",
+					address: "",
+					template: "First",
+					showMap: true,
+					useCustomMap: true,
+					language: "en",
+					loadingtext: "",
+					googleMapUnits: "imperial",
+					useFixedZoom: true,
+					iniZoom: 17,
+					location: {
+						lat: 43.6567919,
+						lng: -79.6010328,
+					},
+					state: {},
+					tour: "{}"
+				},
+				template: "First",
+				templatesList: [
+					"First"
+				],
+				markerLocation: {
+					lat: 43.6567919,
+					lng: -79.6010328,
+				},
+				snackbar: {
+					visible: false,
+					y: "top",
+					x: null,
+					mode: "multi-line",
+					timeout: 6000,
+					text: "Hello, I\"m a snackbar"
+				},
+				lastError: "",
 			};
 		},
 
 		name: "index",
 		components: {
-			AdminPage: AdminPage
+			ActionButtons
 		},
 
-		computed: mapGetters("projects", [
-			"projects",
-			"selected"
-		]),
+		computed: {
+			...mapGetters("projects", [
+				"projects",
+				"selected"
+			]),
+			canSaveNew(){
+				return (
+					this.editedItem.title !== "" &&
+					this.editedItem.address !== "" &&
+					this.editedItem.folder !== "./" &&
+					this.editedItem.outFolder !== "./" &&
+					// this.editedItem.outFolder !== this.editedItem.folder &&
+					this.editedItem.location.lat !== 43.6567919 &&
+					this.editedItem.location.lng !== -79.6010328
+				);
+			}
+		},
 
 		methods: {
 			...mapActions("projects", [
@@ -39,7 +242,46 @@
 				"saveRow",
 				"updateRow",
 				"removeRow"
-			])
+			]),
+
+			dlgCancel(){
+				this.dialog = false;
+				this.resetDlg();
+			},
+
+			dlgSave(){
+				if(this.editedItem._id){
+					this.saveProject(this.editedItem);
+				} else {
+					this.createProject(this.editedItem);
+				}
+			},
+
+			unzipped(res){
+				const responce = JSON.parse(res);
+				// todo alnalyze response and do different things
+				console.log({responce});
+				if(responce.success){
+					this.snackbar.text = "File uploaded and unzipped!";
+					this.snackbar.visible = true;
+					this.getList();
+				}
+			},
+			prepareCreate(){
+				this.editedItem = Object.assign({}, this.newItem);
+				this.markerLocation = this.newItem.location;
+				this.dlgTitle = "Create new project";
+				this.dialog = true;
+			},
+			dragEnd(e){
+				this.editedItem.location = this.markerLocation;
+			},
+			updateCoordinates(location) {
+				this.markerLocation = {
+					lat: location.latLng.lat(),
+					lng: location.latLng.lng(),
+				};
+			},
 		},
 
 		created() {
@@ -50,5 +292,7 @@
 </script>
 
 <style scoped>
-
+.v-app {
+	background-color: transparent;
+}
 </style>

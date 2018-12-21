@@ -55,14 +55,19 @@ export const created = ({ commit, state }, row, needSelect) => {
 	});
 };
 
-export const updateRow = ({ commit }, row) => {
+export const updateRow = ({ commit, state }, row) => {
+	state.errors={};
+	state.success = false;
 	projectService.updateProject(row).then((response) => {
 		let res = response.data;
-		if (res.data)
+		if (res.data){
+			state.success = true;
 			commit(UPDATE, res.data);
-	}).catch((response) => {
-		if (response.data.error)
-			toastr.error(response.data.error.message);
+		} else {
+			state.errors={"error":"error"};
+		}
+	}).catch((err) => {
+		state.errors=err.response.data.error.errors;
 	});	
 };
 

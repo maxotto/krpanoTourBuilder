@@ -73,22 +73,11 @@ module.exports = {
 
 			return this.collection.findById(ctx.modelID).exec()
 				.then((doc) => {
-
-					if (ctx.params.address != null)
-						doc.address = ctx.params.address;
-
-					if (ctx.params.type != null)
-						doc.type = ctx.params.type;
-
-					if (ctx.params.name != null)
-						doc.name = ctx.params.name;
-
-					if (ctx.params.description != null)
-						doc.description = ctx.params.description;
-
-					if (ctx.params.status != null)
-						doc.status = ctx.params.status;
-
+					for (let key in ctx.params) {
+						if (ctx.params.hasOwnProperty(key)) {
+							doc[key] = ctx.params[key];
+						}
+					}
 					return doc.save();
 				})
 				.then((doc) => {

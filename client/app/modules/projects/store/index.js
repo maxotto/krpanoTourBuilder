@@ -45,7 +45,7 @@ const mutations = {
 
 	[UPDATE] (state, model) {
 		each(state.rows, (item) => {
-			if (item.code == model.code)
+			if (item._id == model._id)
 				assign(item, model);
 		});
 	},

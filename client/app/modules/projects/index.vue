@@ -148,6 +148,15 @@
 	export default {
 		data() {
 			return {
+				uploader: undefined,
+				options: {
+					chunkSize: 52428800*10,
+					target: this.getTarget,
+					testChunks: false
+				},
+				attrs: {
+					accept: 'application/zip'
+				},
 				headers: [
 					{
 						text: "Title",
@@ -273,7 +282,26 @@
 				"updateRow",
 				"removeRow"
 			]),
-
+			saveProject(data){
+				this.updateRow({
+					title: data.title,
+					address: data.address,
+					folder: data.folder,
+					outFolder: data.outFolder,
+					template: data.template,
+					location: data.location,
+					id: data._id,
+					showMap: data.showMap,
+					useCustomMap: data.useCustomMap,
+					language: data.language,
+					loadingtext: data.loadingtext,
+					googleMapUnits: data.googleMapUnits,
+					useFixedZoom: data.useFixedZoom,
+					iniZoom: data.iniZoom,
+					state: data.state,
+					tour: data.tour,
+				});
+			},
 			createProject (data) {
 				this.created({
 					title: data.title,
@@ -362,7 +390,7 @@
 			},
 			editItem (item) {
 				this.resetDlg();
-				this.editedIndex = this.rows.indexOf(item);
+				this.editedIndex = this.projects.indexOf(item);
 				this.editedItem = Object.assign({}, item);
 				this.options.target = '/upload/project/'+this.editedItem._id;
 				this.markerLocation = this.editedItem.location;

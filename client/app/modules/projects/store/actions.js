@@ -43,7 +43,11 @@ export const created = ({ commit, state }, row, needSelect) => {
 	state.errors={};
 	state.success = false;
 	projectService.addProject(row).then((response)=> {
+		//New _ID comes - need to save it too
+		// console.log(response.data.data._id);
+		row._id = response.data.data._id;
 		commit(ADD, row);
+		state.success = true;
 		if (needSelect)
 			commit(SELECT, row, false);
 	}).catch(err => {
@@ -67,7 +71,7 @@ export const updated = ({ commit }, row) => {
 };
 
 export const removeRow = ({ commit }, row) => {
-	projectService.deleteProject(row.id).then((response) => {
+	projectService.deleteProject(row._id).then((response) => {
 		commit(REMOVE, row);
 	}).catch((response) => {
 		if (response.data.error)

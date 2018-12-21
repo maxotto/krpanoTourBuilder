@@ -51,7 +51,7 @@ module.exports = {
 		create(ctx) {
 			this.validateParams(ctx, true);
 			const data = ctx.params;
-			// data.user = ctx.req.user._id;
+			data.user = ctx.req.user._id;
 			let project = new Project(data);
 
 			return project.save()

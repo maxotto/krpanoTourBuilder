@@ -252,10 +252,10 @@
 				}
 			},
 			errors(val){
-				this.snackbar.text = JSON.stringify(val);
-				this.lastError = JSON.stringify(val);
-				this.snackbar.visible = true;
 				if(this.dialog && Object.keys(val).length){
+					this.snackbar.text = JSON.stringify(val);
+					this.lastError = JSON.stringify(val);
+					this.snackbar.visible = true;
 					this.dialog = false;
 					this.resetDlg();
 				}
@@ -359,6 +359,19 @@
 					lat: location.latLng.lat(),
 					lng: location.latLng.lng(),
 				};
+			},
+			editItem (item) {
+				this.resetDlg();
+				this.editedIndex = this.rows.indexOf(item);
+				this.editedItem = Object.assign({}, item);
+				this.options.target = '/upload/project/'+this.editedItem._id;
+				this.markerLocation = this.editedItem.location;
+				this.dlgTitle = 'Edit the project';
+				this.dialog = true;
+			},
+
+			deleteItem (item) {
+				confirm('Are you sure you want to delete this project "' + item.title + '"?') && this.removeRow(item);
 			},
 		},
 

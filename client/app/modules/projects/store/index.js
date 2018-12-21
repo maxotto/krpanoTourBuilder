@@ -51,7 +51,7 @@ const mutations = {
 	},
 
 	[REMOVE] (state, model) {
-		state.rows = state.rows.filter(item => item.code != model.code);
+		state.rows = state.rows.filter(item => item._id != model._id);
 	}	
 };
 

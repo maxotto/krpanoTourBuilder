@@ -364,6 +364,8 @@
 			},
 
 			unzipped(res){
+				console.log(res);
+				return;
 				const responce = JSON.parse(res);
 				// todo alnalyze response and do different things
 				console.log({responce});

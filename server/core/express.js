@@ -70,12 +70,33 @@ function initMiddleware(app) {
 	app.set("port", config.port);
 
 	// Request body parsing middleware should be above methodOverride
-	app.use(bodyParser.urlencoded({
+	const urlencodedMiddleware = bodyParser.urlencoded({
 		extended: true,
 		limit: config.contentMaxLength * 2
-	}));
+	});
+	const jsonMiddleware = bodyParser.json();
 	app.use(validator());
-	app.use(bodyParser.json());
+	// app.use(bodyParser.json());
+	app.use(function (req, res, next) {
+		let t = req.get("Content-Type");
+		if(t && t.indexOf('multipart/form-data:') === -1){
+			return urlencodedMiddleware(req, res, next);
+		} else {
+			next();
+		}
+	});
+	app.use(function (req, res, next) {
+		let t = req.get("Content-Type");
+		if(t && t.indexOf('multipart/form-data:') === -1){
+			return jsonMiddleware(req, res, next);
+		} else {
+			next();
+		}
+
+		// return urlencodedMiddleware(req, res, next);
+	});
+
+
 	app.use(methodOverride());
 
 	if (config.isProductionMode()) {

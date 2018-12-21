@@ -102,15 +102,19 @@
 				this.setAllowByState(this.state);
 			},
 			getTarget() {
-				return "/upload/project/" + this.id;
+				return "api/projects/" + this.id + "/upload/";
 			},
 			fileSuccess(rootFile, file, message, chunk) {
 				//console.log(rootFile, file, message, chunk);
 				this.$emit("unzipped", message);
 			},
 			fileError(rootFile, file, message, chunk) {
-				//console.log(rootFile, file, message, chunk);
-				this.$emit("unzipped", message);
+				console.log(chunk.xhr.status);
+				this.$emit("unzipped", {
+					status: chunk.xhr.status,
+					statusText: chunk.xhr.statusText,
+					message: message,
+				});
 			},
 			setPlanEditor() {
 				this.planEditorURL = "/project/" + this.id;

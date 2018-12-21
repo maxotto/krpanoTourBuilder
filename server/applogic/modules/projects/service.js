@@ -7,6 +7,7 @@ let C 	 		= require("../../../core/constants");
 let _			= require("lodash");
 
 let Project 		= require("./models/project");
+let multiparty = require('multiparty');
 
 module.exports = {
 	settings: {
@@ -20,10 +21,24 @@ module.exports = {
 		role: "user",
 		collection: Project,
 
-		modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
+		// modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
 	},
 
 	actions: {
+		upload: {
+			cache: false,
+			handler(ctx) {
+				const fields = [];
+				this.validateParams(ctx);
+				const form = new multiparty.Form();
+				form.parse(ctx.req, function(err, fields, files) {
+					console.log({err}, {fields}, {files});
+				});
+
+				return 1;
+				// return JSON.stringify(ctx.req);
+			}
+		},
 		list: {
 			cache: false,
 			handler(ctx) {

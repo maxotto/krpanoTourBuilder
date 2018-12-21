@@ -35,7 +35,7 @@ module.exports = {
 					console.log({err}, {fields}, {files});
 				});
 
-				return 1;
+				return Promise.resolve('From promise');
 				// return JSON.stringify(ctx.req);
 			}
 		},

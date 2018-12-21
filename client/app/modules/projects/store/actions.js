@@ -13,7 +13,7 @@ export const clearSelection = ({ commit }) => {
 };
 
 export const downloadRows = ({ commit }) => {
-	console.log('downloadRows');
+	// console.log('downloadRows');
 	projectService.fetchProjects().then((response) => {
 		let res = response.data;
 		if (res.status == 200 && res.data)
@@ -39,10 +39,16 @@ export const saveRow = ({ commit }, model) => {
 	});		
 };
 
-export const created = ({ commit }, row, needSelect) => {
-	commit(ADD, row);
-	if (needSelect)
-		commit(SELECT, row, false);
+export const created = ({ commit, state }, row, needSelect) => {
+	state.errors={};
+	state.success = false;
+	projectService.addProject(row).then((response)=> {
+		commit(ADD, row);
+		if (needSelect)
+			commit(SELECT, row, false);
+	}).catch(err => {
+		state.errors=err.response.data.error.errors;
+	});
 };
 
 export const updateRow = ({ commit }, row) => {

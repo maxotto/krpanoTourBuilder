@@ -4,7 +4,9 @@ import { each, find, assign, remove, isArray } from "lodash";
 
 const state = {
 	rows: [],
-	selected: []
+	selected: [],
+	errors: {},
+	success: false,
 };
 
 const mutations = {
@@ -14,7 +16,7 @@ const mutations = {
 	},
 
 	[ADD] (state, model) {
-		let found = find(state.rows, (item) => item.code == model.code);
+		let found = find(state.rows, (item) => item._id == model._id);
 		if (!found)
 			state.rows.push(model);
 	},

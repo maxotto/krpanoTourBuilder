@@ -1,37 +1,37 @@
 import axios from "axios";
 
 export default {
-  fetchProjects () {
-    return axios.get('api/projects/list');
-  },
+	fetchProjects() {
+		return axios.get("api/projects/list");
+	},
 
-  addProject (params) {
-    return axios.post('projects/create', params);
-  },
+	addProject(params) {
+		return axios.post("api/projects/create", params);
+	},
 
-  updateProject (params) {
-    return axios.put('projects/' + params.id, params);
-  },
+	updateProject(params) {
+		return axios.put("api/projects/" + params.id, params);
+	},
 
-  getProject (id) {
-    return axios.get('projects/' + id);
-  },
+	getProject(id) {
+		return axios.get("api/projects/" + id);
+	},
 
-  getProjectXml (id) {
-    return axios.get('projects/' + id + '/xml');
-  },
+	getProjectXml(id) {
+		return axios.get("api/projects/" + id + "/xml");
+	},
 
-  saveProjectXml (id, xml) {
-    return axios.post('projects/' + id + '/xml', xml);
-  },
+	saveProjectXml(id, xml) {
+		return axios.post("api/projects/" + id + "/xml", xml);
+	},
 
-  deleteProject (id) {
-    return axios.delete('projects/' + id);
-  },
+	deleteProject(id) {
+		return axios.delete("api/projects/" + id);
+	},
 
-  buildProject (id) {
-    console.log('Start build')
-    // return Promise.resolve('XXX');
-    return axios.get('build/' + id);
-  }
+	buildProject(id) {
+		console.log("Start build")
+		// return Promise.resolve("XXX");
+		return axios.get("build/" + id);
+	}
 }

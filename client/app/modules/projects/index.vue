@@ -4,6 +4,26 @@
 		<v-app class="v-app">
 			<v-content>
 				<v-container fluid>
+					<v-snackbar
+						:color="snackbar.color"
+						v-model="snackbar.visible"
+						:bottom="snackbar.y === 'bottom'"
+						:left="snackbar.x === 'left'"
+						:multi-line="snackbar.mode === 'multi-line'"
+						:right="snackbar.x === 'right'"
+						:timeout="snackbar.timeout"
+						:top="snackbar.y === 'top'"
+						:vertical="snackbar.mode === 'vertical'"
+					>
+						{{ snackbar.text }}
+						<v-btn
+							color="pink"
+							flat
+							@click="snackbar.snackbar = false"
+						>
+							Close
+						</v-btn>
+					</v-snackbar>
 					<v-btn color="primary" dark class="mb-2" @click="prepareCreate">New project</v-btn>
 					<v-dialog v-model="dialog" max-width="1024" >
 						<v-card>
@@ -47,10 +67,6 @@
 												</v-flex>
 												<v-flex xs12>
 													{{editedItem.location}}
-												</v-flex>
-												<v-flex xs12>
-													<br>
-													<span style="color: red"><b>Upload files</b></span>
 												</v-flex>
 											</v-layout>
 										</v-flex>
@@ -100,13 +116,13 @@
 										class="mr-2"
 										@click="editItem(props.item)"
 									>
-										mdi-pencil
+										edit
 									</v-icon>
 									<v-icon
 										small
 										@click="deleteItem(props.item)"
 									>
-										mdi-delete
+										delete
 									</v-icon>
 
 								</td>
@@ -193,7 +209,8 @@
 				},
 				snackbar: {
 					visible: false,
-					y: "top",
+					color: "error",
+					y: "bottom",
 					x: null,
 					mode: "multi-line",
 					timeout: 6000,
@@ -211,7 +228,9 @@
 		computed: {
 			...mapGetters("projects", [
 				"projects",
-				"selected"
+				"selected",
+				"errors",
+				"success"
 			]),
 			canSaveNew(){
 				return (
@@ -225,7 +244,23 @@
 				);
 			}
 		},
-
+		watch: {
+			success(val){
+				if(this.dialog && val){
+					this.dialog = false;
+					this.resetDlg();
+				}
+			},
+			errors(val){
+				this.snackbar.text = JSON.stringify(val);
+				this.lastError = JSON.stringify(val);
+				this.snackbar.visible = true;
+				if(this.dialog && Object.keys(val).length){
+					this.dialog = false;
+					this.resetDlg();
+				}
+			}
+		},
 		methods: {
 			...mapActions("projects", [
 				"downloadRows",
@@ -239,6 +274,47 @@
 				"removeRow"
 			]),
 
+			createProject (data) {
+				this.created({
+					title: data.title,
+					address: data.address,
+					template: data.template,
+					location: data.location,
+					showMap: data.showMap,
+					useCustomMap: data.useCustomMap,
+					language: data.language,
+					loadingtext: data.loadingtext,
+					googleMapUnits: data.googleMapUnits,
+					useFixedZoom: data.useFixedZoom,
+					iniZoom: data.iniZoom,
+					state: {
+						uploaded: false,
+						floors: false,
+						floorsImages: false,
+						hotspots: false,
+						lookatTag: false,
+						needRebuild: false,
+						built: false,
+						lookatValue: false,
+						planHotspots: false,
+					},
+					tour: "{}"
+				}, true);
+				/*
+					.then(result => {
+						if (!result.data.success){
+							this.snackbar.text = result.data.message;
+							this.lastError = result.data.message;
+							this.snackbar.visible = true;
+						} else {
+							this.getList();
+							this.dialog = false;
+							this.resetDlg();
+						}
+					})
+					.catch(error => {console.log(error)});
+					*/
+			},
 			dlgCancel(){
 				this.dialog = false;
 				this.resetDlg();
@@ -250,6 +326,13 @@
 				} else {
 					this.createProject(this.editedItem);
 				}
+			},
+
+			resetDlg(){
+				this.lastError = "";
+				this.editedItem = Object.assign({}, this.newItem);
+				this.markerLocation = this.newItem.location;
+				this.editedIndex = -1;
 			},
 
 			unzipped(res){

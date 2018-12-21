@@ -50,14 +50,9 @@ module.exports = {
 
 		create(ctx) {
 			this.validateParams(ctx, true);
-
-			let project = new Project({
-				address: ctx.params.address,
-				type: ctx.params.type,
-				name: ctx.params.name,
-				description: ctx.params.description,
-				status: ctx.params.status
-			});
+			const data = ctx.params;
+			// data.user = ctx.req.user._id;
+			let project = new Project(data);
 
 			return project.save()
 				.then((doc) => {

@@ -7,7 +7,10 @@ let C 	 		= require("../../../core/constants");
 let _			= require("lodash");
 
 let Project 		= require("./models/project");
-let multiparty = require('multiparty');
+let multiparty = require("multiparty");
+let uploader = require("../../../libs/chunkUploader")({
+	uploads: "c:\\chunks"
+});
 
 module.exports = {
 	settings: {
@@ -20,6 +23,7 @@ module.exports = {
 		permission: C.PERM_LOGGEDIN,
 		role: "user",
 		collection: Project,
+		idParamName: "_id",
 
 		// modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
 	},
@@ -32,7 +36,13 @@ module.exports = {
 				this.validateParams(ctx);
 				const form = new multiparty.Form();
 				form.parse(ctx.req, function(err, fields, files) {
-					console.log({err}, {fields}, {files});
+					const _fields = {};
+					Object.keys(fields).forEach(function(key) {
+						console.log(key, fields[key]);
+						_fields[key] = fields[key][0];
+					});
+					console.log({err}, {_fields}, files.file[0]);
+					uploader.upload(_fields, files.file[0]);
 				});
 
 				return Promise.resolve('From promise');

@@ -87,9 +87,10 @@
 				buildURL: "",
 				planEditorURL: "",
 				options: {
-					chunkSize: 52428800 * 10,
+					chunkSize: 1024*1024,
 					target: this.getTarget,
-					testChunks: false
+					testChunks: false,
+					generateUniqueIdentifier: this.generateUniqueIdentifier,
 				},
 				attrs: {
 					accept: "application/zip"
@@ -97,6 +98,10 @@
 			};
 		},
 		methods: {
+			generateUniqueIdentifier(file) {
+				let relativePath = file.relativePath || file.webkitRelativePath || file.fileName || file.name;
+				return this.id + '-' + file.size + '-' + relativePath.replace(/[^0-9a-zA-Z_-]/img, '');
+			},
 			closeBuildDlg(success) {
 				this.buildDlgShow = false;
 				this.setAllowByState(this.state);

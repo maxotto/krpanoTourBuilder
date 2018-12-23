@@ -35,18 +35,24 @@ module.exports = {
 				const fields = [];
 				this.validateParams(ctx);
 				const form = new multiparty.Form();
-				form.parse(ctx.req, function(err, fields, files) {
-					const _fields = {};
-					Object.keys(fields).forEach(function(key) {
-						console.log(key, fields[key]);
-						_fields[key] = fields[key][0];
+				return new Promise(function(resolve, reject){
+					form.parse(ctx.req, function(err, fields, files) {
+						if (err) {
+							reject(err);
+						} else {
+							const _fields = {};
+							Object.keys(fields).forEach(function(key) {
+								_fields[key] = fields[key][0];
+							});
+							resolve({
+								fields: _fields,
+								file: files.file[0],
+							});
+						}
 					});
-					console.log({err}, {_fields}, files.file[0]);
-					uploader.upload(_fields, files.file[0]);
+				}).then((chunk) => {
+					return uploader.upload(chunk.fields, chunk.file);
 				});
-
-				return Promise.resolve('From promise');
-				// return JSON.stringify(ctx.req);
 			}
 		},
 		list: {

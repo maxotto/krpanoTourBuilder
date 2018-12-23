@@ -28,14 +28,13 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		});
 	}
 
-	function verify_num_chunks(chunk) {
-		var sourceDir = path.join(chunksPath, chunk.uuid);
-
+	function verify_num_chunks(chunk_params) {
+		const sourceDir = path.resolve(chunksPath, chunk_params.identifier);
 		return new Promise(function(resolve, reject){
 
 			// check we have the same number of chunks
 			readdir(sourceDir).then(function(files){
-				if (files.length == chunk.totalChunks){
+				if (files.length == chunk_params.totalChunks){
 					resolve();
 				} else {
 					reject('Unexpected number of chunks');
@@ -83,13 +82,13 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		/**
 		 * Verify chunks
 		 */
-		verify_chunks: function(chunk) {
+		"verify_chunks": function(chunk_params, chunk_file) {
 			return new Promise(function(resolve, reject){
-				verify_num_chunks(chunk).then(function() {
-					debug('chunks verified');
-					resolve();
+				verify_num_chunks(chunk_params).then(function() {
+					console.log('chunks verified');
+					resolve('chunks verified');
 				}, function(err){
-					debug('chunks rejected');
+					console.log('chunks rejected');
 					reject(err);
 				});
 			});
@@ -102,16 +101,16 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		verify_upload: function(chunk){
 			return new Promise(function(resolve, reject) {
 				verify_num_chunks(chunk).then(function() {
-					debug('chunks verified');
+					console.log('chunks verified');
 					verify_size(chunk).then(function() {
-						debug('size verified');
+						console.log('size verified');
 						resolve();
 					}, function(err) {
-						debug('size rejected');
+						console.log('size rejected');
 						reject(err);
 					});
 				}, function(err){
-					debug('chunks rejected');
+					console.log('chunks rejected');
 					reject(err);
 				});
 			});
@@ -161,15 +160,12 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 			// убедиться, что папка chunksPath/identifier существует
 			const destDir = path.resolve(chunksPath, chunk_params.identifier);
 			fs.ensureDirSync(destDir);
-
-			const chunkName = chunk_params.filename + '.part' + chunk_params.chunkNumber;
+			const chunkName = chunk_params.filename + '.part' + chunk_params.chunkNumber.padStart(4, '0');
 			const	newPath = path.join(destDir, chunkName);
 
 			return new Promise(function(resolve, reject){
-				console.log("File = ",chunk_file);
-				console.log("Path = ",chunk_file.path);
 				move(chunk_file.path, newPath).then(function(){
-					debug('got chunk ' + chunk_params.chunkNumber + ' of ' + (chunk_params.totalChunks));
+					console.log('got chunk ' + chunk_params.chunkNumber + ' of ' + (chunk_params.totalChunks));
 					resolve(newPath);
 				}, function(err){
 					reject(err, true);
@@ -180,17 +176,17 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		/**
 		 * assemble chunks
 		 */
-		assemble_chunks: function(chunk) {
-			var sourceDir = path.join(chunksPath, chunk.uuid),
-				destDir = path.join(uploadsPath, chunk.uuid);
-
+		assemble_chunks: function(chunk_params, chunk_file) {
+			const sourceDir = path.resolve(chunksPath, chunk_params.identifier);
+			const destDir = path.join(uploadsPath, chunk_params.identifier);
+			fs.ensureDirSync(destDir);
 			return new Promise(function(resolve, reject){
 				readdir(sourceDir).then(function(files){
 					files.sort();
 
 					mkdirp(destDir).then(function(){
-						debug('assembling chunks for ' + chunk.uuid);
-						var destFile = path.join(destDir, chunk.name),
+						console.log('assembling chunks for ' + chunk_params.identifier);
+						var destFile = path.join(destDir, chunk_params.filename),
 							combinedStream = combined.create(),
 							destStream = fs.createWriteStream(destFile);
 
@@ -198,13 +194,13 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 							var srcFile = path.join(sourceDir, file),
 								totalChunks = files.length-1;
 
-							debug('read chunk #'+index+'/'+totalChunks);
+							console.log('read chunk #'+index+'/'+totalChunks);
 
 							combinedStream.append(function(next){
 								var srcStream = fs.createReadStream(srcFile);
 								next(srcStream);
 
-								debug("Adding chunk: " + srcFile + " to stream");
+								console.log("Adding chunk: " + srcFile + " to stream");
 							});
 						});
 
@@ -213,11 +209,11 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 								reject(e, true);
 							})
 							.on('end', function(){
-								debug('chunks assembled for ' + chunk.uuid);
+								console.log('chunks assembled for ' + chunk_params.identifier);
 								rimraf(sourceDir).then(function(){
-									debug('chunks dir removed ' + sourceDir);
+									console.log('chunks dir removed ' + sourceDir);
 									resolve();
-								})
+								});
 							});
 
 						destStream

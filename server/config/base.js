@@ -17,6 +17,7 @@ module.exports = {
 	ip: process.env.NODE_IP || "0.0.0.0",
 	port: process.env.PORT || 3000,
 
+	storageRoot: "E:/aaa/storage",
 	rootPath: global.rootPath,
 	dataFolder: path.join(global.rootPath, "data"),
 

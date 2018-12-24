@@ -12,6 +12,7 @@ let uploader = require("../../../libs/chunkUploader")({
 	uploads: "c:\\chunks"
 });
 const unzipper = require("../../../libs/unzipper");
+const localLib = require("./models/lib");
 
 module.exports = {
 	settings: {
@@ -35,6 +36,7 @@ module.exports = {
 			handler(ctx) {
 				const fields = [];
 				this.validateParams(ctx);
+				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
 				const form = new multiparty.Form();
 				return new Promise(function(resolve, reject){
 					form.parse(ctx.req, function(err, fields, files) {
@@ -57,7 +59,7 @@ module.exports = {
 					.then((fileToUnzip) => {
 						console.log("Upload after assemplbe", {fileToUnzip});
 						// unzip here to project Infolder
-						return unzipper(fileToUnzip, "e:\\agmInfolder");
+						return unzipper(fileToUnzip, folders.source);
 					}, (err) => {console.log("Upload after not last chunk", err);});
 			}
 		},

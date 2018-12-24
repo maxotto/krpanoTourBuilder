@@ -1,3 +1,4 @@
+const path = require('path');
 exports.calcState = function (project) {
 	const iniState = project.state;
 	const newState = JSON.parse(JSON.stringify(iniState));
@@ -23,4 +24,12 @@ exports.calcState = function (project) {
 		newState.floors = floorsAreSet;
 	}
 	return newState;
+};
+
+exports.getFoldersByProjectId = function(id, config){
+	return {
+		root: path.resolve(config.storageRoot, id),
+		source: path.resolve(config.storageRoot, id, "source"),
+		final: path.resolve(config.storageRoot, id, "final"),
+	};
 };

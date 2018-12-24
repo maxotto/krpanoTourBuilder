@@ -365,14 +365,9 @@
 
 			unzipped(res){
 				console.log(res);
-				return;
-				const responce = JSON.parse(res);
-				// todo alnalyze response and do different things
-				console.log({responce});
-				if(responce.success){
+				if(res){
 					this.snackbar.text = "File uploaded and unzipped!";
 					this.snackbar.visible = true;
-					this.getList();
 				}
 			},
 			prepareCreate(){

@@ -27,7 +27,7 @@ module.exports = function (zipFile, destFolder) {
 		.then(() => {
 			console.log(destFolder, "exists and is empty");
 			return _unzip(zipFile, destFolder, (entry) => {
-				console.log(entry, "unzipped");
+				// console.log(entry, "unzipped");
 			});
 		});
 };
@@ -42,7 +42,10 @@ function _unzip(zipFile, destFolder, cb){
 				})
 				.on("error", err => {reject(err);})
 				.on("finish", () => {
-					resolve(destFolder);
+					resolve({
+						operation: "unzip",
+						success: true,
+					});
 				})
 				.on("close", () => {
 					console.log("ZIP close");

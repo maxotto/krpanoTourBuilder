@@ -110,8 +110,14 @@
 				return "api/projects/" + this.id + "/upload/";
 			},
 			fileSuccess(rootFile, file, message, chunk) {
-				//console.log(rootFile, file, message, chunk);
-				this.$emit("unzipped", message);
+				const response = JSON.parse(message);
+				console.log({response});
+				if(response.status && response.status === 200 && response.data.success){
+					this.$emit("unzipped", true);
+					this.dialog = false;
+				} else {
+					this.$emit("unzipped", false);
+				}
 			},
 			fileError(rootFile, file, message, chunk) {
 				console.log(chunk.xhr.status);

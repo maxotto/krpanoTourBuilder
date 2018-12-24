@@ -37,23 +37,23 @@ function _unzip(zipFile, destFolder, cb){
 		console.log("Inside UNZIP promise");
 
 		// TODO unlock file after unzip
-		const stream = fs.createReadStream(zipFile)
-			.pipe(unzip.Extract({ path: destFolder })
-				.on("entry", (entry)=> {
-					if(cb) cb(entry.path);
-				})
-				.on("error", err => {reject(err);})
-				.on("finish", () => {
-					console.log("UnZIP finished");
-					stream.destroy();
-					resolve({
-						operation: "unzip",
-						success: true,
-					});
-				})
-				.on("close", () => {
-					// console.log("ZIP close");
-				})
-			);
+		const stream = fs.createReadStream(zipFile);
+		stream.pipe(unzip.Extract({ path: destFolder })
+			.on("entry", (entry)=> {
+				if(cb) cb(entry.path);
+			})
+			.on("error", err => {reject(err);})
+			.on("finish", () => {
+				console.log("UnZIP finished");
+				stream.destroy();
+				resolve({
+					operation: "unzip",
+					success: true,
+				});
+			})
+			.on("close", () => {
+				// console.log("ZIP close");
+			})
+		);
 	});
 }

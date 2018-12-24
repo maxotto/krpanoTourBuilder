@@ -35,6 +35,8 @@ module.exports = function (zipFile, destFolder) {
 function _unzip(zipFile, destFolder, cb){
 	return new Promise(function(resolve, reject) {
 		console.log("Inside UNZIP promise");
+
+		// TODO unlock file after unzip
 		const stream = fs.createReadStream(zipFile)
 			.pipe(unzip.Extract({ path: destFolder })
 				.on("entry", (entry)=> {

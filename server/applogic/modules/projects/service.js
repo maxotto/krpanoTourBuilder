@@ -13,6 +13,7 @@ let uploader = require("../../../libs/chunkUploader")({
 });
 const unzipper = require("../../../libs/unzipper");
 const localLib = require("./models/lib");
+const fs = require("fs-extra");
 
 module.exports = {
 	settings: {
@@ -38,6 +39,8 @@ module.exports = {
 				this.validateParams(ctx);
 				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
 				const form = new multiparty.Form();
+				let folderToDel;
+				let fileToUnzip;
 				return new Promise(function(resolve, reject){
 					form.parse(ctx.req, function(err, fields, files) {
 						if (err) {
@@ -53,13 +56,48 @@ module.exports = {
 							});
 						}
 					});
-				}).then((chunk) => {
-					return uploader.upload(chunk.fields, chunk.file);
 				})
-					.then((fileToUnzip) => {
-						console.log("Upload after assemplbe", {fileToUnzip});
+					.then((chunk) => {
+						return uploader.upload(chunk.fields, chunk.file);
+					})
+					.then((uploadRes) => {
+						fileToUnzip = uploadRes.file;
+						folderToDel = uploadRes.folder;
 						// unzip here to project Infolder
-						return unzipper(fileToUnzip, folders.source);
+						// return Promise.resolve(true);
+						return unzipper(fileToUnzip, folders.source)
+							.then((unzipRes) => {
+								ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+								this.validateParams(ctx);
+								return this.collection.findById(ctx.modelID).exec()
+									.then((doc) => {
+										return Promise.resolve(doc);
+									})
+									.then((doc) => {
+										// console.log(doc);
+										// doc.state.uploaded = true;
+										return doc.save();
+									})
+									.then((doc) => {
+										return this.toJSON(doc);
+									})
+									.then((json) => {
+										return this.populateModels(json);
+									})
+									.then((json) => {
+										this.notifyModelChanges(ctx, "updated", json);
+										unzipRes.project = json;
+										return unzipRes;
+									});
+							})
+							.then((unzipRes) => {
+								return new Promise((resolve, reject) => {
+									// fs.removeSync(fileToUnzip);
+									fs.removeSync(folderToDel);
+									resolve(unzipRes);
+								});
+							});
+
 					}, (err) => {console.log("Upload after not last chunk", err);});
 			}
 		},
@@ -82,7 +120,7 @@ module.exports = {
 		get: {
 			cache: true,
 			handler(ctx) {
-				ctx.assertModelIsExist(ctx.t("app:DeviceNotFound"));
+				ctx.assertModelIsExist(ctx.t("app:ProjectsNotFound"));
 				return Promise.resolve(ctx.model);
 			}
 		},

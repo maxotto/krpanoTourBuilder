@@ -186,9 +186,9 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 
 					mkdirp(destDir).then(function(){
 						// console.log("assembling chunks for " + chunk_params.identifier);
-						const destFile = path.join(destDir, chunk_params.filename),
-							combinedStream = combined.create(),
-							destStream = fs.createWriteStream(destFile);
+						const destFile = path.join(destDir, chunk_params.filename);
+						const combinedStream = combined.create();
+						const destStream = fs.createWriteStream(destFile);
 
 						files.forEach(function(file, index){
 							const srcFile = path.join(sourceDir, file),
@@ -213,12 +213,22 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 								rimraf(sourceDir).then(function(){
 									console.log("chunks dir removed " + sourceDir);
 									console.log("destFile= " + destFile);
-									resolve(destFile);
+									destStream.end();
+									resolve({
+										file: destFile,
+										folder: destDir
+									});
 								});
 							});
 
 						destStream
-							.on("error", function(e){ reject(e, true); });
+							.on("error", function(e){ reject(e, true); })
+							.on("close", () => {
+								console.log(destFile, "closed");
+							})
+							.on("finish", () => {
+								console.log("Chunks stream closed");
+							});
 
 						combinedStream.pipe(destStream);
 

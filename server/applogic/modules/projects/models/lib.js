@@ -1,4 +1,5 @@
 const path = require('path');
+const KrPanoFile = require('./krPanoTools');
 exports.calcState = function (project) {
 	const iniState = project.state;
 	const newState = JSON.parse(JSON.stringify(iniState));
@@ -32,4 +33,10 @@ exports.getFoldersByProjectId = function(id, config){
 		source: path.resolve(config.storageRoot, id, "source"),
 		final: path.resolve(config.storageRoot, id, "final"),
 	};
+};
+
+exports.updateProjectAfterUpload = function(id, config){
+	const folders = this.getFoldersById(id, config);
+	const tourFileName = path.resolve(folders.source, 'tour.xml');
+	const tourFileTool = new KrPanoFile(tourFileName);
 };

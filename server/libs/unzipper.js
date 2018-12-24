@@ -35,20 +35,22 @@ module.exports = function (zipFile, destFolder) {
 function _unzip(zipFile, destFolder, cb){
 	return new Promise(function(resolve, reject) {
 		console.log("Inside UNZIP promise");
-		fs.createReadStream(zipFile)
+		const stream = fs.createReadStream(zipFile)
 			.pipe(unzip.Extract({ path: destFolder })
 				.on("entry", (entry)=> {
 					if(cb) cb(entry.path);
 				})
 				.on("error", err => {reject(err);})
 				.on("finish", () => {
+					console.log("UnZIP finished");
+					stream.destroy();
 					resolve({
 						operation: "unzip",
 						success: true,
 					});
 				})
 				.on("close", () => {
-					console.log("ZIP close");
+					// console.log("ZIP close");
 				})
 			);
 	});

@@ -113,15 +113,16 @@
 				const response = JSON.parse(message);
 				console.log({response});
 				if(response.status && response.status === 200 && response.data.success){
-					this.$emit("unzipped", true);
+					this.$emit("unzipped", {error: false});
 					this.dialog = false;
 				} else {
-					this.$emit("unzipped", false);
+					this.$emit("unzipped", {error: true});
 				}
 			},
 			fileError(rootFile, file, message, chunk) {
 				console.log(chunk.xhr.status);
 				this.$emit("unzipped", {
+					error: true,
 					status: chunk.xhr.status,
 					statusText: chunk.xhr.statusText,
 					message: message,

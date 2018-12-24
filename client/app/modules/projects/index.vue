@@ -365,8 +365,11 @@
 
 			unzipped(res){
 				console.log(res);
-				if(res){
+				if(res.error!==true){
 					this.snackbar.text = "File uploaded and unzipped!";
+					this.snackbar.visible = true;
+				} else {
+					this.snackbar.text = res.statusText + ": " + res.message;
 					this.snackbar.visible = true;
 				}
 			},

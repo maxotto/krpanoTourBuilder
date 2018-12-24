@@ -11,6 +11,7 @@ let multiparty = require("multiparty");
 let uploader = require("../../../libs/chunkUploader")({
 	uploads: "c:\\chunks"
 });
+const unzipper = require("../../../libs/unzipper");
 
 module.exports = {
 	settings: {
@@ -52,7 +53,12 @@ module.exports = {
 					});
 				}).then((chunk) => {
 					return uploader.upload(chunk.fields, chunk.file);
-				});
+				})
+					.then((fileToUnzip) => {
+						console.log("Upload after assemplbe", {fileToUnzip});
+						// unzip here to project Infolder
+						return unzipper(fileToUnzip, "e:\\agmInfolder");
+					}, (err) => {console.log("Upload after not last chunk", err);});
 			}
 		},
 		list: {

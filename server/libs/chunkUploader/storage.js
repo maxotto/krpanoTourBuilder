@@ -37,7 +37,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 				if (files.length == chunk_params.totalChunks){
 					resolve();
 				} else {
-					reject("Unexpected number of chunks");
+					reject("Not all chunks received");
 				}
 			}, function (err){
 				reject(err);
@@ -88,7 +88,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 					console.log("chunks verified");
 					resolve("chunks verified");
 				}, function(err){
-					console.log("chunks rejected");
+					// console.log("verify_chunks error = ",err);
 					reject(err);
 				});
 			});
@@ -165,7 +165,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 
 			return new Promise(function(resolve, reject){
 				move(chunk_file.path, newPath).then(function(){
-					console.log("got chunk " + chunk_params.chunkNumber + " of " + (chunk_params.totalChunks));
+					// console.log("got chunk " + chunk_params.chunkNumber + " of " + (chunk_params.totalChunks));
 					resolve(newPath);
 				}, function(err){
 					reject(err, true);
@@ -185,7 +185,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 					files.sort();
 
 					mkdirp(destDir).then(function(){
-						console.log("assembling chunks for " + chunk_params.identifier);
+						// console.log("assembling chunks for " + chunk_params.identifier);
 						const destFile = path.join(destDir, chunk_params.filename),
 							combinedStream = combined.create(),
 							destStream = fs.createWriteStream(destFile);
@@ -194,13 +194,13 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 							const srcFile = path.join(sourceDir, file),
 								totalChunks = files.length-1;
 
-							console.log("read chunk #"+index+"/"+totalChunks);
+							// console.log("read chunk #"+index+"/"+totalChunks);
 
 							combinedStream.append(function(next){
 								const srcStream = fs.createReadStream(srcFile);
 								next(srcStream);
 
-								console.log("Adding chunk: " + srcFile + " to stream");
+								// console.log("Adding chunk: " + srcFile + " to stream");
 							});
 						});
 
@@ -212,7 +212,8 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 								console.log("chunks assembled for " + chunk_params.identifier);
 								rimraf(sourceDir).then(function(){
 									console.log("chunks dir removed " + sourceDir);
-									resolve();
+									console.log("destFile= " + destFile);
+									resolve(destFile);
 								});
 							});
 

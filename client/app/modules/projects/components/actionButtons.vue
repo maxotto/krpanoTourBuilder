@@ -64,6 +64,7 @@
 		</v-btn>
 		<v-btn small color="success" :disabled="!plan" :to="planEditorURL">Set plan&lookat</v-btn>
 		<build-dlg :id="id" :show="buildDlgShow" @closeDlg="closeBuildDlg"></build-dlg>
+		<div style="display: none">{{currentState}} Need to recalculate when state changed</div>
 	</div>
 </template>
 
@@ -111,12 +112,15 @@
 			},
 			fileSuccess(rootFile, file, message, chunk) {
 				const response = JSON.parse(message);
-				console.log({response});
+				// console.log({response});
+				this.dialog = false;
 				if(response.status && response.status === 200 && response.data.success){
-					this.$emit("unzipped", {error: false});
-					this.dialog = false;
-				} else {
-					this.$emit("unzipped", {error: true});
+					this.$emit("unzipped", {
+						error: false,
+						project: response.data.project,
+					});
+				} else if(response.data.error && response.data.success === false) {
+					this.$emit("unzipped", {error: response.data.error});
 				}
 			},
 			fileError(rootFile, file, message, chunk) {

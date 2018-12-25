@@ -71,24 +71,41 @@ module.exports = {
 								this.validateParams(ctx);
 								return this.collection.findById(ctx.modelID).exec()
 									.then((doc) => {
-										return Promise.resolve(doc);
+										return localLib.checkTour(ctx.modelID, config)
+											.then((xml) => {
+												console.log(xml);
+												if (xml === false){
+													return Promise.reject('Zip file is not krpano tour!');
+												} else {
+													doc.tour = JSON.stringify(xml);
+													return Promise.resolve(doc);
+												}
+											});
 									})
 									.then((doc) => {
 										// console.log(doc);
-										// doc.state.uploaded = true;
-										return doc.save();
-									})
-									.then((doc) => {
-										return this.toJSON(doc);
-									})
-									.then((json) => {
-										return this.populateModels(json);
-									})
-									.then((json) => {
-										this.notifyModelChanges(ctx, "updated", json);
-										unzipRes.project = json;
-										return unzipRes;
+										doc.state.uploaded = true;
+										return doc.save()
+											.then((doc) => {
+												return this.toJSON(doc);
+											})
+											.then((json) => {
+												return this.populateModels(json);
+											})
+											.then((json) => {
+												this.notifyModelChanges(ctx, "updated", json);
+												unzipRes.project = json;
+												return unzipRes;
+											});
+									}, err => {
+										console.log(err);
+										return Promise.resolve({
+											operation: "unzip",
+											success: false,
+											error: err,
+										});
 									});
+
 							})
 							.then((unzipRes) => {
 								return new Promise((resolve, reject) => {

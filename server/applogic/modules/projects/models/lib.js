@@ -35,8 +35,16 @@ exports.getFoldersByProjectId = function(id, config){
 	};
 };
 
-exports.updateProjectAfterUpload = function(id, config){
-	const folders = this.getFoldersById(id, config);
-	const tourFileName = path.resolve(folders.source, 'tour.xml');
+exports.checkTour = function(id, config){
+	const folders = this.getFoldersByProjectId(id, config);
+	const tourFileName = path.resolve(folders.source, "tour.xml");
 	const tourFileTool = new KrPanoFile(tourFileName);
+	return tourFileTool.load()
+		.then(xml => {
+			return Promise.resolve(xml);
+		}, err => {
+			return Promise.resolve(false);
+		}
+
+		);
 };

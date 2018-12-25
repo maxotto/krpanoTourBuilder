@@ -191,6 +191,9 @@ module.exports = {
 
 			return Project.remove({ _id: ctx.modelID })
 				.then(() => {
+					return localLib.deleteTourFolder(ctx.modelID, config);
+				})
+				.then(() => {
 					return ctx.model;
 				})
 				.then((json) => {

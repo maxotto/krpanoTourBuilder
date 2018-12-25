@@ -1,5 +1,6 @@
 const path = require('path');
 const KrPanoFile = require('./krPanoTools');
+const fs = require("fs-extra");
 exports.calcState = function (project) {
 	const iniState = project.state;
 	const newState = JSON.parse(JSON.stringify(iniState));
@@ -47,4 +48,9 @@ exports.checkTour = function(id, config){
 		}
 
 		);
+};
+
+exports.deleteTourFolder = function(id, config){
+	const folders = this.getFoldersByProjectId(id, config);
+	return fs.remove(folders.root);
 };

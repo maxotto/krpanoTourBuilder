@@ -1,15 +1,15 @@
 "use strict";
 
-let logger 			= require("./logger");
-let config 			= require("../config");
-let response		= require("./response");
-let tokgen			= require("../libs/tokgen");
+let logger = require("./logger");
+let config = require("../config");
+let response = require("./response");
+let tokgen = require("../libs/tokgen");
 
-let C 				= require("./constants");
-let Sockets   		= require("./sockets");
+let C = require("./constants");
+let Sockets = require("./sockets");
 
-let _ 				= require("lodash");
-let hash			= require("object-hash");
+let _ = require("lodash");
+let hash = require("object-hash");
 
 let Services; // circular reference
 
@@ -19,11 +19,11 @@ let Services; // circular reference
 class Context {
 	/**
 	 * Constructor of Context
-	 * 
+	 *
 	 * @param {any} called service
 	 */
 	constructor(service) {
-		this.id = tokgen(); 
+		this.id = tokgen();
 		this.createdAt = Date.now(); // TODO: HF timer
 
 		this.service = service; // service instance
@@ -32,6 +32,7 @@ class Context {
 		this.req = null; // req from ExpressJS router
 		this.res = null; // res from ExpressJS router
 		this.action = null; // action of service
+		this.resource = null; // resource of service
 		this.t = null; // i18n translate method
 		this.user = null; // logged in user
 		this.socket = null; // socket from socket.io session
@@ -42,17 +43,17 @@ class Context {
 
 		this.validationErrors = [];
 
-		if (!Services) 
+		if (!Services)
 			Services = require("./services");
 	}
 
 	/**
 	 * Get a service by name of service
-	 * 
+	 *
 	 * @param {any} serviceName
 	 * @returns {Service}
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	services(serviceName) {
 		return Services.get(serviceName);
@@ -60,7 +61,7 @@ class Context {
 
 	/**
 	 * Create a new Context from a REST request
-	 * 
+	 *
 	 * @param {any} service
 	 * @param {any} action
 	 * @param {any} app
@@ -83,8 +84,32 @@ class Context {
 	}
 
 	/**
+	 * Create a new Context from a resource request
+	 *
+	 * @param {any} service
+	 * @param {any} resource
+	 * @param {any} app
+	 * @param {any} req
+	 * @param {any} res
+	 * @returns
+	 */
+	static CreateFromResource(service, resource, app, req, res) {
+		let ctx = new Context(service);
+		ctx.provider = "resource";
+		ctx.app = app;
+		ctx.req = req;
+		ctx.res = res;
+		ctx.t = req.t;
+		ctx.user = req.user;
+		ctx.params = _.defaults({}, req.query, req.params, req.body);
+		ctx.resource = resource;
+
+		return ctx;
+	}
+
+	/**
 	 * Create a new Context from a websocket request
-	 * 
+	 *
 	 * @param {any} service
 	 * @param {any} action
 	 * @param {any} app
@@ -107,7 +132,7 @@ class Context {
 
 	/**
 	 * Create a new Context from a GraphQL request
-	 * 
+	 *
 	 * @param {any} service
 	 * @param {any} action
 	 * @param {any} root
@@ -129,7 +154,7 @@ class Context {
 
 	/**
 	 * Create a new Context for initialize services
-	 * 
+	 *
 	 * @param {any} service
 	 * @param {any} app
 	 * @param {any} db
@@ -145,16 +170,16 @@ class Context {
 
 	/**
 	 * Initialize new Context from self
-	 * 
+	 *
 	 * @param {any} params
 	 * @returns
-	 * 
+	 *
 	 * @memberOf Context
 	 */
 	copy(params, appendParams) {
 		let newCtx = _.defaults(new Context(this.service), this);
 		newCtx.provider = "internal";
-		
+
 		if (appendParams === true)
 			newCtx.params = _.defaults(this.params, params);
 		else
@@ -162,13 +187,13 @@ class Context {
 
 		return newCtx;
 	}
-	
+
 	/**
 	 * Return the response time in milliseconds
-	 * 
+	 *
 	 * @returns {Number}
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	responseTime() {
 		return Date.now() - this.createdAt;
@@ -176,10 +201,10 @@ class Context {
 
 	/**
 	 * Resolve model from request by id/code
-	 * 
+	 *
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	resolveModel() {
 		if (_.isFunction(this.service.modelResolver)) {
@@ -188,7 +213,7 @@ class Context {
 			let id = this.params[idParamName];
 
 			if (id != null) {
-				return this.service.modelResolver.call(this.service, this, id).then( (model) => {
+				return this.service.modelResolver.call(this.service, this, id).then((model) => {
 					this.model = model;
 					return model;
 				});
@@ -200,10 +225,10 @@ class Context {
 
 	/**
 	 * Check the ctx.model exists. If not we throw a BAD_REQUEST exception
-	 * 
+	 *
 	 * @param {any} errorMessage
 	 * @returns
-	 * 
+	 *
 	 * @memberOf Context
 	 */
 	assertModelIsExist(errorMessage) {
@@ -215,13 +240,13 @@ class Context {
 
 	/**
 	 * Check permission of request
-	 * 
+	 *
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	checkPermission() {
-		let permission = this.action.permission || this.service.$settings.permission || C.PERM_LOGGEDIN;
+		let permission = (this.action && this.action.permission) || (this.resource && this.resource.permission) || this.service.$settings.permission || C.PERM_LOGGEDIN;
 
 		if (permission == C.PERM_PUBLIC)
 			return Promise.resolve();
@@ -230,42 +255,41 @@ class Context {
 		return Promise.resolve()
 
 		// check logged in
-		.then(() => {
-			if (!this.user)
-				this.errorUnauthorized();
-		})
+			.then(() => {
+				if (!this.user)
+					this.errorUnauthorized();
+			})
 
-		// check role
-		.then(() => {
-			if (permission == C.PERM_ADMIN && !this.isAdmin()) {
-				this.errorForbidden();
-			}
-			else if (permission == C.PERM_USER && this.user.roles.indexOf(C.ROLE_USER) == -1) {
-				this.errorForbidden();
-			}
-		})
+			// check role
+			.then(() => {
+				if (permission == C.PERM_ADMIN && !this.isAdmin()) {
+					this.errorForbidden();
+				} else if (permission == C.PERM_USER && this.user.roles.indexOf(C.ROLE_USER) == -1) {
+					this.errorForbidden();
+				}
+			})
 
-		// check owner
-		.then(() => {
-			if (permission == C.PERM_OWNER && _.isFunction(this.service.$schema.ownerChecker)) {
-				return this.service.$schema.ownerChecker(this).catch((err) => {
-					if (_.isObject(err))
-						throw err;
-					else
-						this.errorForbidden(C.ERR_ONLY_OWNER_CAN_EDIT_AND_DELETE, this.t("app:YouAreNotTheOwner"));
-				});
-			}
-		});
+			// check owner
+			.then(() => {
+				if (permission == C.PERM_OWNER && _.isFunction(this.service.$schema.ownerChecker)) {
+					return this.service.$schema.ownerChecker(this).catch((err) => {
+						if (_.isObject(err))
+							throw err;
+						else
+							this.errorForbidden(C.ERR_ONLY_OWNER_CAN_EDIT_AND_DELETE, this.t("app:YouAreNotTheOwner"));
+					});
+				}
+			});
 	}
 
 
 	/**
 	 * Broadcast a websocket message
-	 * 
-	 * @param {any} cmd		command of message
-	 * @param {any} data	data of message
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @param {any} cmd    command of message
+	 * @param {any} data  data of message
+	 *
+	 * @memberOf Context
 	 */
 	broadcast(cmd, data) {
 		if (this.io) {
@@ -277,16 +301,16 @@ class Context {
 
 	/**
 	 * Send a message back to the requester
-	 * 
-	 * @param {any} cmd		command of message
-	 * @param {any} data	data of message
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @param {any} cmd    command of message
+	 * @param {any} data  data of message
+	 *
+	 * @memberOf Context
 	 */
 	emitUser(cmd, data) {
 		if (!this.socket && this.user) {
 			// If not socket (come from REST), but has user, we try to find it
-			this.socket = _.find(Sockets.userSockets, (socket) => { 
+			this.socket = _.find(Sockets.userSockets, (socket) => {
 				return socket.request.user._id == this.user._id;
 			});
 		}
@@ -298,19 +322,19 @@ class Context {
 	}
 
 	/**
-	 * Broadcast a message to a role 
-	 * 
-	 * @param {any} cmd		command of message
-	 * @param {any} data	data of message
-	 * @param {any} role	If the `role` is not specified, we use the role of service
+	 * Broadcast a message to a role
+	 *
+	 * @param {any} cmd    command of message
+	 * @param {any} data  data of message
+	 * @param {any} role  If the `role` is not specified, we use the role of service
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	emit(cmd, data, role) {
 		if (!role)
 			role = this.service.$settings.role;
-		
+
 		// If not definied we will send a broadcast
 		if (!role) {
 			let path = "/" + this.service.namespace + "/" + cmd;
@@ -328,7 +352,7 @@ class Context {
 			let path = "/" + this.service.namespace + "/" + cmd;
 			logger.debug("Send WS message to '" + role + "' role '" + path);
 
-			_.each(Sockets.userSockets, (socket) => { 
+			_.each(Sockets.userSockets, (socket) => {
 				let user = socket.request.user;
 				if (user && user.roles && user.roles.indexOf(role) !== -1) {
 					// If requested via socket we omit the requester user
@@ -344,11 +368,11 @@ class Context {
 
 	/**
 	 * Check the context has the `name` parameter
-	 * 
+	 *
 	 * @param {any} name
 	 * @returns {boolean}
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	hasParam(name, errorMessage) {
 		return this.params[name] != null;
@@ -356,12 +380,12 @@ class Context {
 
 	/**
 	 * Validate the requested parameters
-	 * 
+	 *
 	 * @param {any} name
 	 * @param {any} errorMessage
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	validateParam(name, errorMessage) {
 		let self = this;
@@ -374,29 +398,29 @@ class Context {
 
 		/**
 		 * Check has no errors yet
-		 * 
+		 *
 		 * @returns
 		 */
-		validator.noError = function() {
+		validator.noError = function () {
 			return validator.errors.length == 0;
 		};
 
 		/**
 		 * Add a new validation error
-		 * 
+		 *
 		 * @param {any} message
 		 */
-		validator.addError = function(message) {
+		validator.addError = function (message) {
 			validator.errors.push(message);
 			self.validationErrors.push(message);
 		};
 
 		/**
 		 * Close the validation. If no error set back the parameter value to this.params
-		 * 
+		 *
 		 * @returns
 		 */
-		validator.end = function() {
+		validator.end = function () {
 			if (validator.noError())
 				self.params[validator.name] = validator.value;
 
@@ -405,23 +429,23 @@ class Context {
 
 		/**
 		 * Throw exception if has validation error
-		 * 
+		 *
 		 * @returns
 		 */
-		validator.throw = function() {
+		validator.throw = function () {
 			if (!validator.noError())
 				throw new Error(validator.errors.join(" "));
-			
+
 			return validator.value;
 		};
 
 		/**
 		 * Assert the parameter is not empty
-		 * 
+		 *
 		 * @param {any} errorMessage
 		 * @returns
 		 */
-		validator.notEmpty = function(errorMessage) {
+		validator.notEmpty = function (errorMessage) {
 			if (validator.value == null || validator.value === "")
 				validator.addError(errorMessage || `Parameter '${name}' is empty!`); // i18n
 
@@ -433,32 +457,32 @@ class Context {
 
 		/**
 		 * Assert the parameter is a Number
-		 * 
+		 *
 		 * @param {any} errorMessage
 		 * @returns
 		 */
-		validator.isNumber = function(errorMessage) {
+		validator.isNumber = function (errorMessage) {
 			if (validator.value != null)
 				return _.isNumber(validator.value);
 
 			// We don't check if it is not null
 			return true;
-		};	
+		};
 
 		/**
 		 * Trim the content of parameter
-		 * 
+		 *
 		 * @returns
 		 */
-		validator.trim = function() {
+		validator.trim = function () {
 			if (validator.noError() && validator.value != null)
 				validator.value = validator.value.trim();
-			
+
 			return validator;
 		};
 
 		let value = this.params[name];
-		if (value != null) 
+		if (value != null)
 			validator.value = value;
 		//else
 		//	validator.addError(errorMessage || `Parameter '${name}' missing!`); // i18n
@@ -468,10 +492,10 @@ class Context {
 
 	/**
 	 * Check has validation errors
-	 * 
+	 *
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	hasValidationErrors() {
 		return this.validationErrors.length > 0;
@@ -479,11 +503,11 @@ class Context {
 
 	/**
 	 * Generate and throw a new BAD_REQUEST response error
-	 * 
-	 * @param {any} type 	type of error
-	 * @param {any} msg		message of error (localized)
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @param {any} type  type of error
+	 * @param {any} msg    message of error (localized)
+	 *
+	 * @memberOf Context
 	 */
 	errorBadRequest(type, msg) {
 		let err = new Error(msg);
@@ -498,11 +522,11 @@ class Context {
 
 	/**
 	 * Generate and throw a new FORBIDDEN response error
-	 * 
-	 * @param {any} type 	type of error
-	 * @param {any} msg		message of error (localized)
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @param {any} type  type of error
+	 * @param {any} msg    message of error (localized)
+	 *
+	 * @memberOf Context
 	 */
 	errorForbidden(type, msg) {
 		let err = new Error(msg);
@@ -517,11 +541,11 @@ class Context {
 
 	/**
 	 * Generate and throw a new UNAUTHORIZED response error
-	 * 
-	 * @param {any} type 	type of error
-	 * @param {any} msg		message of error (localized)
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @param {any} type  type of error
+	 * @param {any} msg    message of error (localized)
+	 *
+	 * @memberOf Context
 	 */
 	errorUnauthorized(type, msg) {
 		let err = new Error(msg);
@@ -534,14 +558,14 @@ class Context {
 		throw err;
 	}
 
-	
+
 	/**
 	 * Send notification from data changes via websocket
-	 * 
-	 * @param {any} type	type of changes
-	 * @param {any} json	Changed JSON object
-	 * @param {any} role	affected role
-	 * 
+	 *
+	 * @param {any} type  type of changes
+	 * @param {any} json  Changed JSON object
+	 * @param {any} role  affected role
+	 *
 	 * @memberOf Context
 	 */
 	notifyChanges(type, json, role) {
@@ -555,7 +579,7 @@ class Context {
 			let personService = this.services("persons");
 			response.user = personService.toJSON(this.user);
 		}
-		this.emit(type, response, role);	
+		this.emit(type, response, role);
 	}
 
 	/**
@@ -563,12 +587,12 @@ class Context {
 	 * and use them in the query
 	 *
 	 * Example:
-	 * 		GET /posts?offset=20&limit=10&sort=-votes,createdAt
-	 * 
+	 *    GET /posts?offset=20&limit=10&sort=-votes,createdAt
+	 *
 	 * @param  {query} query Mongo query object
 	 * @return {query}
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	queryPageSort(query) {
 		if (this.params) {
@@ -590,11 +614,11 @@ class Context {
 
 	/**
 	 * Check the request is authenticated.
-	 * 
+	 *
 	 * @param {any} role
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	isAuthenticated(role) {
 		return this.user != null;
@@ -602,11 +626,11 @@ class Context {
 
 	/**
 	 * Check the request come from a user who has the required role
-	 * 
-	 * @param {any} role		required role
+	 *
+	 * @param {any} role    required role
 	 * @returns
-	 * 
-	 * @memberOf Context	
+	 *
+	 * @memberOf Context
 	 */
 	hasRole(role) {
 		return this.user && this.user.roles.indexOf(role) != -1;
@@ -614,9 +638,9 @@ class Context {
 
 	/**
 	 * Check the requester user is an admin (has "admin" role)
-	 * 
+	 *
 	 * @returns {boolean}
-	 * 
+	 *
 	 * @memberOf Context
 	 */
 	isAdmin() {

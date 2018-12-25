@@ -36,7 +36,8 @@ module.exports = {
 			handler(ctx) {
 				this.validateParams(ctx);
 				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
-				return "Resourse for " + ctx.params._id;
+				console.log({folders});
+				return Promise.resolve("Resourse for " + ctx.params._id);
 			}
 		}
 	},

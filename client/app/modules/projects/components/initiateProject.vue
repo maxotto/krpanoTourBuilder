@@ -42,7 +42,7 @@
 									></v-switch>
 								</v-flex>
 								<v-flex xs2 align-content-center>
-									<img :src="`api/projects/${id}/getimage`"/>
+									<img :src="`resource/projects/${id}/getimage`"/>
 								</v-flex>
 								<v-flex xs4 align-content-center>
 									<upload-block :template="template" :recordId="id" @clicked="uploaded"

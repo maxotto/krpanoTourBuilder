@@ -1,18 +1,18 @@
-'use strict';
+"use strict";
 // https://github.com/FineUploader/node-fine-uploader-server/blob/master/lib/traditional/storage.js
-let fs = require('fs-extra'),
-	util = require('util'),
-	path = require('path'),
-	debug = require('debug')('fineuploader'),
-	combined = require('combined-stream')
+let fs = require("fs-extra"),
+	util = require("util"),
+	path = require("path"),
+	debug = require("debug")("fineuploader"),
+	combined = require("combined-stream");
 
 // Promise-ified/De-node-ified functions
 // use util.promisify
 let readdir = util.promisify(fs.readdir),
 	stat = util.promisify(fs.stat),
-	rimraf = util.promisify(require('rimraf')),
-	mv = util.promisify(require('mv')),
-	mkdirp = util.promisify(require('mkdirp'));
+	rimraf = util.promisify(require("rimraf")),
+	mv = util.promisify(require("mv")),
+	mkdirp = util.promisify(require("mkdirp"));
 
 let Storage;
 
@@ -28,17 +28,16 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		});
 	}
 
-	function verify_num_chunks(chunk) {
-		var sourceDir = path.join(chunksPath, chunk.uuid);
-
+	function verify_num_chunks(chunk_params) {
+		const sourceDir = path.resolve(chunksPath, chunk_params.identifier);
 		return new Promise(function(resolve, reject){
 
 			// check we have the same number of chunks
 			readdir(sourceDir).then(function(files){
-				if (files.length == chunk.totalChunks){
+				if (files.length == chunk_params.totalChunks){
 					resolve();
 				} else {
-					reject('Unexpected number of chunks');
+					reject("Not all chunks received");
 				}
 			}, function (err){
 				reject(err);
@@ -49,7 +48,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 	}
 
 	function verify_size(chunk){
-		var destDir = path.join(uploadsPath, chunk.uuid),
+		const destDir = path.join(uploadsPath, chunk.uuid),
 			destFile = path.join(destDir, chunk.name);
 
 		return new Promise(function(resolve, reject){
@@ -57,7 +56,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 				if (s.size == chunk.totalSize){
 					resolve();
 				} else {
-					reject('Unexpected file size');
+					reject("Unexpected file size");
 				}
 			}, function(err){
 				reject(err);
@@ -67,7 +66,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 	}
 
 	function rm_chunks(chunk){
-		var sourceDir = path.join(chunksPath, chunk.uuid);
+		const sourceDir = path.join(chunksPath, chunk.uuid);
 
 		return new Promise(function(resolve, reject){
 			rimraf(sourceDir).then(function(){
@@ -83,13 +82,13 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		/**
 		 * Verify chunks
 		 */
-		verify_chunks: function(chunk) {
+		"verify_chunks": function(chunk_params, chunk_file) {
 			return new Promise(function(resolve, reject){
-				verify_num_chunks(chunk).then(function() {
-					debug('chunks verified');
-					resolve();
+				verify_num_chunks(chunk_params).then(function() {
+					console.log("chunks verified");
+					resolve("chunks verified");
 				}, function(err){
-					debug('chunks rejected');
+					// console.log("verify_chunks error = ",err);
 					reject(err);
 				});
 			});
@@ -102,16 +101,16 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		verify_upload: function(chunk){
 			return new Promise(function(resolve, reject) {
 				verify_num_chunks(chunk).then(function() {
-					debug('chunks verified');
+					console.log("chunks verified");
 					verify_size(chunk).then(function() {
-						debug('size verified');
+						console.log("size verified");
 						resolve();
 					}, function(err) {
-						debug('size rejected');
+						console.log("size rejected");
 						reject(err);
 					});
 				}, function(err){
-					debug('chunks rejected');
+					console.log("chunks rejected");
 					reject(err);
 				});
 			});
@@ -120,12 +119,12 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		/**
 		 * Deletes the file saved under `uuid` and its containing folder.
 		 *
-		 * @param uuid string The file's unique idenfitier assigned by Fine Uploader
+		 * @param uuid string The file"s unique idenfitier assigned by Fine Uploader
 		 */
 		delete_file: function(uuid){
 			return new Promise(function (resolve, reject){
 
-				var dirToDelete = path.join(uploadsPath, uuid);
+				const dirToDelete = path.join(uploadsPath, uuid);
 
 				rimraf(dirToDelete).then(function(){
 					resolve();
@@ -140,7 +139,7 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		 * Store a file
 		 */
 		store_file:  function(file){
-			var destinationDir = path.join(uploadsPath, file.uuid),
+			const destinationDir = path.join(uploadsPath, file.uuid),
 				newPath = path.join(destinationDir, file.name);
 
 			return new Promise(function(resolve, reject){
@@ -161,15 +160,12 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 			// убедиться, что папка chunksPath/identifier существует
 			const destDir = path.resolve(chunksPath, chunk_params.identifier);
 			fs.ensureDirSync(destDir);
-
-			const chunkName = chunk_params.filename + '.part' + chunk_params.chunkNumber;
+			const chunkName = chunk_params.filename + ".part" + chunk_params.chunkNumber.padStart(4, "0");
 			const	newPath = path.join(destDir, chunkName);
 
 			return new Promise(function(resolve, reject){
-				console.log("File = ",chunk_file);
-				console.log("Path = ",chunk_file.path);
 				move(chunk_file.path, newPath).then(function(){
-					debug('got chunk ' + chunk_params.chunkNumber + ' of ' + (chunk_params.totalChunks));
+					// console.log("got chunk " + chunk_params.chunkNumber + " of " + (chunk_params.totalChunks));
 					resolve(newPath);
 				}, function(err){
 					reject(err, true);
@@ -180,48 +176,59 @@ module.exports = Storage = function(chunksPath, uploadsPath){
 		/**
 		 * assemble chunks
 		 */
-		assemble_chunks: function(chunk) {
-			var sourceDir = path.join(chunksPath, chunk.uuid),
-				destDir = path.join(uploadsPath, chunk.uuid);
-
+		assemble_chunks: function(chunk_params, chunk_file) {
+			const sourceDir = path.resolve(chunksPath, chunk_params.identifier);
+			const destDir = path.join(uploadsPath, chunk_params.identifier);
+			fs.ensureDirSync(destDir);
 			return new Promise(function(resolve, reject){
 				readdir(sourceDir).then(function(files){
 					files.sort();
 
 					mkdirp(destDir).then(function(){
-						debug('assembling chunks for ' + chunk.uuid);
-						var destFile = path.join(destDir, chunk.name),
-							combinedStream = combined.create(),
-							destStream = fs.createWriteStream(destFile);
+						// console.log("assembling chunks for " + chunk_params.identifier);
+						const destFile = path.join(destDir, chunk_params.filename);
+						const combinedStream = combined.create();
+						const destStream = fs.createWriteStream(destFile);
 
 						files.forEach(function(file, index){
-							var srcFile = path.join(sourceDir, file),
+							const srcFile = path.join(sourceDir, file),
 								totalChunks = files.length-1;
 
-							debug('read chunk #'+index+'/'+totalChunks);
+							// console.log("read chunk #"+index+"/"+totalChunks);
 
 							combinedStream.append(function(next){
-								var srcStream = fs.createReadStream(srcFile);
+								const srcStream = fs.createReadStream(srcFile);
 								next(srcStream);
 
-								debug("Adding chunk: " + srcFile + " to stream");
+								// console.log("Adding chunk: " + srcFile + " to stream");
 							});
 						});
 
 						combinedStream
-							.on('error', function(e){
+							.on("error", function(e){
 								reject(e, true);
 							})
-							.on('end', function(){
-								debug('chunks assembled for ' + chunk.uuid);
+							.on("end", function(){
+								console.log("chunks assembled for " + chunk_params.identifier);
 								rimraf(sourceDir).then(function(){
-									debug('chunks dir removed ' + sourceDir);
-									resolve();
-								})
+									console.log("chunks dir removed " + sourceDir);
+									console.log("destFile= " + destFile);
+									destStream.end();
+									resolve({
+										file: destFile,
+										folder: destDir
+									});
+								});
 							});
 
 						destStream
-							.on('error', function(e){ reject(e, true); });
+							.on("error", function(e){ reject(e, true); })
+							.on("close", () => {
+								console.log(destFile, "closed");
+							})
+							.on("finish", () => {
+								console.log("Chunks stream closed");
+							});
 
 						combinedStream.pipe(destStream);
 

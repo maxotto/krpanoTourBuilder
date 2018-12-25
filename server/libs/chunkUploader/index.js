@@ -16,9 +16,20 @@ module.exports = function(opts) {
 
 	return {
 		"upload": function(chunk_params, chunk_file){
-			debug("chunk received");
+			console.log("chunk received");
 			const uploadedFile = {};
-			storage.store_chunk(chunk_params, chunk_file);
+			return storage.store_chunk(chunk_params, chunk_file)
+				.then(() => {
+					return storage.verify_chunks(chunk_params, chunk_file);
+				})
+				.then(() => {
+					console.log('Need to assemble');
+					return storage.assemble_chunks(chunk_params, chunk_file);
+				}, (err)=>{
+					console.log("Reject chunk ->",err);
+					return Promise.reject(new Error(err));
+				})
+			;
 		}
 	};
 };

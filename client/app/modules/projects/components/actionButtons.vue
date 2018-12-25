@@ -64,6 +64,7 @@
 		</v-btn>
 		<v-btn small color="success" :disabled="!plan" :to="planEditorURL">Set plan&lookat</v-btn>
 		<build-dlg :id="id" :show="buildDlgShow" @closeDlg="closeBuildDlg"></build-dlg>
+		<div style="display: none">{{currentState}} Need to recalculate when state changed</div>
 	</div>
 </template>
 
@@ -110,12 +111,22 @@
 				return "api/projects/" + this.id + "/upload/";
 			},
 			fileSuccess(rootFile, file, message, chunk) {
-				//console.log(rootFile, file, message, chunk);
-				this.$emit("unzipped", message);
+				const response = JSON.parse(message);
+				// console.log({response});
+				this.dialog = false;
+				if(response.status && response.status === 200 && response.data.success){
+					this.$emit("unzipped", {
+						error: false,
+						project: response.data.project,
+					});
+				} else if(response.data.error && response.data.success === false) {
+					this.$emit("unzipped", {error: response.data.error});
+				}
 			},
 			fileError(rootFile, file, message, chunk) {
 				console.log(chunk.xhr.status);
 				this.$emit("unzipped", {
+					error: true,
 					status: chunk.xhr.status,
 					statusText: chunk.xhr.statusText,
 					message: message,

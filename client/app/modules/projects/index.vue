@@ -129,10 +129,6 @@
 							</tr>
 						</template>
 					</v-data-table>
-					<v-btn color="success">Success</v-btn>
-					<v-btn color="error">Error</v-btn>
-					<v-btn color="warning">Warning</v-btn>
-					<v-btn color="info">Info</v-btn>
 				</v-container>
 			</v-content>
 
@@ -365,14 +361,13 @@
 
 			unzipped(res){
 				console.log(res);
-				return;
-				const responce = JSON.parse(res);
-				// todo alnalyze response and do different things
-				console.log({responce});
-				if(responce.success){
+				if(res.error === false){
 					this.snackbar.text = "File uploaded and unzipped!";
 					this.snackbar.visible = true;
-					this.getList();
+					this.saveProject(res.project);
+				} else {
+					this.snackbar.text = res.error;
+					this.snackbar.visible = true;
 				}
 			},
 			prepareCreate(){
@@ -416,4 +411,8 @@
 .v-app {
 	background-color: transparent;
 }
+table.v-table tbody td, table.v-table tbody th {
+	height: auto;
+}
+
 </style>

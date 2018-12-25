@@ -1,3 +1,5 @@
+const path = require('path');
+const KrPanoFile = require('./krPanoTools');
 exports.calcState = function (project) {
 	const iniState = project.state;
 	const newState = JSON.parse(JSON.stringify(iniState));
@@ -23,4 +25,26 @@ exports.calcState = function (project) {
 		newState.floors = floorsAreSet;
 	}
 	return newState;
+};
+
+exports.getFoldersByProjectId = function(id, config){
+	return {
+		root: path.resolve(config.storageRoot, id),
+		source: path.resolve(config.storageRoot, id, "source"),
+		final: path.resolve(config.storageRoot, id, "final"),
+	};
+};
+
+exports.checkTour = function(id, config){
+	const folders = this.getFoldersByProjectId(id, config);
+	const tourFileName = path.resolve(folders.source, "tour.xml");
+	const tourFileTool = new KrPanoFile(tourFileName);
+	return tourFileTool.load()
+		.then(xml => {
+			return Promise.resolve(xml);
+		}, err => {
+			return Promise.resolve(false);
+		}
+
+		);
 };

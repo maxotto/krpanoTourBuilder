@@ -11,6 +11,9 @@ let multiparty = require("multiparty");
 let uploader = require("../../../libs/chunkUploader")({
 	uploads: "c:\\chunks"
 });
+const unzipper = require("../../../libs/unzipper");
+const localLib = require("./models/lib");
+const fs = require("fs-extra");
 
 module.exports = {
 	settings: {
@@ -34,19 +37,85 @@ module.exports = {
 			handler(ctx) {
 				const fields = [];
 				this.validateParams(ctx);
+				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
 				const form = new multiparty.Form();
-				form.parse(ctx.req, function(err, fields, files) {
-					const _fields = {};
-					Object.keys(fields).forEach(function(key) {
-						console.log(key, fields[key]);
-						_fields[key] = fields[key][0];
+				let folderToDel;
+				let fileToUnzip;
+				return new Promise(function(resolve, reject){
+					form.parse(ctx.req, function(err, fields, files) {
+						if (err) {
+							reject(err);
+						} else {
+							const _fields = {};
+							Object.keys(fields).forEach(function(key) {
+								_fields[key] = fields[key][0];
+							});
+							resolve({
+								fields: _fields,
+								file: files.file[0],
+							});
+						}
 					});
-					console.log({err}, {_fields}, files.file[0]);
-					uploader.upload(_fields, files.file[0]);
-				});
+				})
+					.then((chunk) => {
+						return uploader.upload(chunk.fields, chunk.file);
+					})
+					.then((uploadRes) => {
+						fileToUnzip = uploadRes.file;
+						folderToDel = uploadRes.folder;
+						// unzip here to project Infolder
+						// return Promise.resolve(true);
+						return unzipper(fileToUnzip, folders.source)
+							.then((unzipRes) => {
+								ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+								this.validateParams(ctx);
+								return this.collection.findById(ctx.modelID).exec()
+									.then((doc) => {
+										return localLib.checkTour(ctx.modelID, config)
+											.then((xml) => {
+												console.log(xml);
+												if (xml === false){
+													return Promise.reject('Zip file is not krpano tour!');
+												} else {
+													doc.tour = JSON.stringify(xml);
+													return Promise.resolve(doc);
+												}
+											});
+									})
+									.then((doc) => {
+										// console.log(doc);
+										doc.state.uploaded = true;
+										return doc.save()
+											.then((doc) => {
+												return this.toJSON(doc);
+											})
+											.then((json) => {
+												return this.populateModels(json);
+											})
+											.then((json) => {
+												this.notifyModelChanges(ctx, "updated", json);
+												unzipRes.project = json;
+												return unzipRes;
+											});
+									}, err => {
+										console.log(err);
+										return Promise.resolve({
+											operation: "unzip",
+											success: false,
+											error: err,
+										});
+									});
 
-				return Promise.resolve('From promise');
-				// return JSON.stringify(ctx.req);
+							})
+							.then((unzipRes) => {
+								return new Promise((resolve, reject) => {
+									// fs.removeSync(fileToUnzip);
+									fs.removeSync(folderToDel);
+									resolve(unzipRes);
+								});
+							});
+
+					}, (err) => {console.log("Upload after not last chunk", err);});
 			}
 		},
 		list: {
@@ -68,7 +137,7 @@ module.exports = {
 		get: {
 			cache: true,
 			handler(ctx) {
-				ctx.assertModelIsExist(ctx.t("app:DeviceNotFound"));
+				ctx.assertModelIsExist(ctx.t("app:ProjectsNotFound"));
 				return Promise.resolve(ctx.model);
 			}
 		},

@@ -139,7 +139,8 @@
 <script>
 	import ActionButtons from "./components/actionButtons.vue";
 	import { mapGetters, mapActions } from "vuex";
-	import schema from "./schema";
+	import InitiateProject from "./components/initiateProject";
+	// import schema from "./__schema";
 
 	export default {
 		data() {
@@ -403,6 +404,16 @@
 		created() {
 			// Download rows for the page
 			this.downloadRows();
+			// add  new routes
+			const iniURL = "/projects/ini/:id";
+			this.$router.addRoutes([
+				{
+					path: iniURL,
+					name: "iniPage",
+					props: true,
+					component: InitiateProject
+				}
+			]);
 		}
 	};
 </script>

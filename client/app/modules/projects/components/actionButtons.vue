@@ -159,7 +159,7 @@
 		computed: {
 			currentState: {
 				get() {
-					console.log("State change", this.state);
+					// console.log("State change", this.state);
 					this.setAllowByState(this.state);
 					return this.state;
 				},

@@ -42,7 +42,7 @@
 									></v-switch>
 								</v-flex>
 								<v-flex xs2 align-content-center>
-									<img :src="`/getimage/fromtemplate/${id}/floorselector/${i}/up`"/>
+									<img :src="`api/projects/${id}/getimage`"/>
 								</v-flex>
 								<v-flex xs4 align-content-center>
 									<upload-block :template="template" :recordId="id" @clicked="uploaded"
@@ -309,9 +309,10 @@
 				*/
 			},
 			getProject() {
-
-				console.log(this.id);
-
+				const i = this.projects.findIndex(p => {
+					return (p._id === this.id);
+				});
+				this.project = this.projects[i];
 			},
 			updateFloorMaps() {
 				this.floorSelect = [{

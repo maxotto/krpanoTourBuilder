@@ -30,12 +30,20 @@ module.exports = {
 
 		// modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
 	},
-
+	resources:{
+		"getimage": {
+			cache: true,
+			handler(ctx) {
+				this.validateParams(ctx);
+				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+				return "Resourse for " + ctx.params._id;
+			}
+		}
+	},
 	actions: {
 		upload: {
 			cache: false,
 			handler(ctx) {
-				const fields = [];
 				this.validateParams(ctx);
 				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
 				const form = new multiparty.Form();

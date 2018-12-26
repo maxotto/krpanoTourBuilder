@@ -20,7 +20,7 @@
 			</v-btn>
 		</v-snackbar>
 		<h1>Initiate project</h1>
-		<template v-if="project">{{project.state}}</template>
+		<template v-if="project">{{project.floorSelect}}</template>
 		<span style="color: red;"><b> {{lastError}}</b></span><br>
 		<v-stepper v-model="step" vertical v-if="project">
 			<v-stepper-step :complete="step > 1" step="1">
@@ -31,7 +31,6 @@
 			<v-stepper-content step="1">
 				<v-card color="grey lighten-1" class="mb-5">
 					<v-flex xs12 style="margin: 15px;">
-						<v-subheader class="pl-0">Select number of floors</v-subheader>
 						<div class="floorSelectorContainer">
 							<v-layout row wrap v-for="(template, i) in floorsTemplate" :key="`${i}`"
 									  class="floorSelector" align-content-center>
@@ -42,7 +41,7 @@
 									></v-switch>
 								</v-flex>
 								<v-flex xs2 align-content-center>
-									<img :src="`resource/projects/${id}/getimage`"/>
+									<img :src="`resource/projects/${id}/getimage/fromtemplate/floorselector/?n=${i}&t=up`"/>
 								</v-flex>
 								<v-flex xs4 align-content-center>
 									<upload-block :template="template" :recordId="id" @clicked="uploaded"
@@ -277,9 +276,15 @@
 					this.checkStep1 = ready && hasOne;
 				}
 			},
-			uploaded(floorNumber) {
-				// console.log("Uploaded", floorNumber);
-				this.getProject();
+			uploaded(data) {
+				console.log("Uploaded", data);
+				const floor = data.floor;
+				const mapFile = data.file;
+				if(data.success === true && data.project){
+					this.project = data.project;
+				}
+				this.updateFloorMaps();
+				//this.getProject();
 			},
 			saveProject() {
 				/*
@@ -313,6 +318,7 @@
 					return (p._id === this.id);
 				});
 				this.project = this.projects[i];
+				this.updateFloorMaps();
 			},
 			updateFloorMaps() {
 				this.floorSelect = [{
@@ -333,8 +339,10 @@
 								label: this.floorsTemplate[i].name,
 							}
 						);
+						const image = this.project.floorSelect[index].image;
 						setTimeout(() => {
-							this.floorsTemplate[i].image = `getimage/floormap/${this.id}/${i}?rnd` + +Math.random();
+							// this.floorsTemplate[i].image = `getimage/floormap/${this.id}/${i}?rnd` + +Math.random();
+							this.floorsTemplate[i].image = `resource/projects/${this.id}/getimage/floormap?floor=${i}&rnd=` + Math.random();
 						}, 100);
 					} else {
 						// console.log("Clear state", this.floorsTemplate);
@@ -429,5 +437,6 @@
 
 	.floorSelectorContainer {
 		max-width: 600px;
+		width: 600px;
 	}
 </style>

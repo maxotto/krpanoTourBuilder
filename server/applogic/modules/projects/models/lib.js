@@ -54,3 +54,10 @@ exports.deleteTourFolder = function(id, config){
 	const folders = this.getFoldersByProjectId(id, config);
 	return fs.remove(folders.root);
 };
+
+exports.getImagePathByTemplate = function(template, config){
+	if(template === "First"){
+		return path.resolve(config.rootPath, "krpano_templates", "First");
+	}
+	return undefined;
+};

@@ -2,7 +2,7 @@
 	<v-container align-content-center class="upload">
 		<file-upload
 			v-show="template.state"
-			:post-action="`/upload/floorImage/${recordId}/${template.number}`"
+			:post-action="`api/projects/${recordId}/upload/floorImage?floor=${template.number}`"
 			:input-id="`file${template.number}`"
 			extensions="gif,jpg,jpeg,png,webp"
 			accept="image/png,image/gif,image/jpeg,image/webp"
@@ -15,13 +15,13 @@
 			<v-btn small :ref="`uploadbtn${template.number}`">
 				<template v-if="template.uploaded">
 					<v-icon>
-						mdi-reload
+						refresh
 					</v-icon>
 					Change map image
 				</template>
 				<template v-else>
 					<v-icon>
-						mdi-plus
+						add
 					</v-icon>
 					Add map image
 				</template>
@@ -47,7 +47,7 @@
 		data() {
 			return {
 				uploaderActive: false,
-			}
+			};
 		},
 		mounted() {
 			const n = "upload" + this.template.number;
@@ -59,14 +59,14 @@
 					this.uploaderActive = val;
 					// alert("$watch Active: " + val)
 				}
-			)
+			);
 		},
 		watch: {
 			forceUpload(val) {
 				if (val && !this.template.uploaded) {
 					// console.log("forceUpload",val);
 					// this.startUpload(this.template.number);
-					var btn = this.$refs["uploadbtn" + this.template.number];
+					const btn = this.$refs["uploadbtn" + this.template.number];
 					document.getElementById("file" + this.template.number).click();
 					// console.log({input});
 					// input.click();
@@ -88,20 +88,20 @@
 					// Filter system files or hide files
 					// 过滤系统文件 和隐藏文件
 					if (/(\/|^)(Thumbs\.db|desktop\.ini|\..+)$/.test(newFile.name)) {
-						return prevent()
+						return prevent();
 					}
 					// Filter php html js file
 					// 过滤 php html js 文件
 					if (/\.(php5?|html?|jsx?)$/i.test(newFile.name)) {
-						return prevent()
+						return prevent();
 					}
 				}
 			},
 			inputFile(newFile, oldFile) {
 				if (newFile && newFile.success !== false) {
-					// console.log("success??", newFile, oldFile, this.template.number);
+					console.log("success??", newFile, oldFile, this.template.number);
 					//this.response = newFile.response;
-					this.$emit("clicked", this.template.number);
+					this.$emit("clicked", newFile.response.data);
 				}
 				if (newFile && !oldFile) {
 					// add
@@ -118,7 +118,7 @@
 				}
 			}
 		}
-	}
+	};
 </script>
 
 <style scoped>

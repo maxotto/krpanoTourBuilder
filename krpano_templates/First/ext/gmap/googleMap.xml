@@ -1,0 +1,28 @@
+<krpano>
+    <action name="skin_showmap" scope="local" args="show">
+        if(show == null, set(show,true); );
+        if(show,
+        jscall(googleMap.vm.openApp());
+        );
+    </action>
+    <action name="skin_addmapspots" scope="local">
+        for(set(i,0), i LT scene.count, inc(i),
+        if(scene[get(i)].lat,
+        calc(spotname, 'spot' + i);
+        calc(spotclickevent, 'skin_hidetooltips(); activatespot(' + spotname + '); skin_loadscene(' + scene[get(i)].name + ',get(skin_settings.loadscene_blend)); skin_updatescroll(); delayedcall(0.5,skin_showmap(false));' );
+        copy(scene[get(i)].mapspotname, spotname);
+        caller.addspot(get(spotname), get(scene[get(i)].lat), get(scene[get(i)].lng), get(scene[get(i)].heading), false, get(spotclickevent), null);
+        if(skin_settings.tooltips_mapspots,
+        set(layer[skin_map].spot[get(spotname)].tooltip, get(scene[get(i)].title) );
+        txtadd(layer[skin_map].spot[get(spotname)].onover, 'set(hovering,true);',  get(style[skin_tooltips].onover) );
+        txtadd(layer[skin_map].spot[get(spotname)].onout,  'set(hovering,false);', get(style[skin_tooltips].onout)  );
+        );
+        );
+        );
+
+        caller.activatespot( calc(xml.scene != null ? scene[get(xml.scene)].mapspotname : 'spot0') );
+        caller.pantospot( calc(xml.scene != null ? scene[get(xml.scene)].mapspotname : 'spot0') );&#xD;
+        caller.setzoom(17);&#xD;
+    </action>
+
+</krpano>

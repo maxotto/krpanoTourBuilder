@@ -1,0 +1,124 @@
+<krpano>
+<!-- <krpano onstart="showlog(true);"> -->
+	<floor_settings 
+		current="1"
+		start_scene_1="scene_IMG_20180731_134244_061"
+		start_scene_2="scene_IMG_20180731_134524_066"
+		start_scene_3="scene_IMG_20180731_135603_075"
+		start_scene_4="scene_IMG_20180731_135340_070"
+	/>
+	<layer 
+		name="oneOff" 
+		visible="false"
+		url="1stFloorUp.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="48.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick="set(floor_settings.current,1);toggleButtons();"
+    />
+	<layer 
+		name="oneOn" 
+		visible="true"
+		url="1stFloorDown.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="48.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick=""
+    />
+	<layer 
+		name="twoOff" 
+		visible="true"
+		url="2ndFloorUp.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="86.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick="set(floor_settings.current,2);toggleButtons();"
+    />
+	<layer 
+		name="twoOn" 
+		visible="false"
+		url="2ndFloorDown.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="86.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick=""
+    />
+	<layer 
+		name="threeOff" 
+		visible="true"
+		url="basementFloorUp.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="10.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick="set(floor_settings.current,3);toggleButtons();"
+    />
+	<layer 
+		name="threeOn" 
+		visible="false"
+		url="basementFloorDown.jpg"
+		keep="true" 
+		handcursor="true" 
+		capture="false"
+		align="rightbottom"
+		y="10.0"
+		x="21"
+		scale="0.5" 
+		scalechildren="true"
+		onclick=""
+    />
+
+	<action name="setButtonsByFloor">
+		turnOffAllButtons();
+		if(floor_settings.current === 1,
+			set(layer[fs1Off].visible, false);
+			set(layer[fs1On].visible, true);
+		);
+		if(floor_settings.current === 2,
+			set(layer[fs2Off].visible, false);
+			set(layer[fs2On].visible, true);
+		);
+
+	</action>
+
+	<action name="toggleButtons">
+		turnOffAllMaps();
+		setButtonsByFloor();
+		if(floor_settings.current === 1,
+			loadscene(get(floor_settings.start_scene_1),null,MERGE,COLORBLEND(1.0,0x000000,easeOutSine));
+		,);
+		if(floor_settings.current === 2,
+			loadscene(get(floor_settings.start_scene_2),null,MERGE,COLORBLEND(1.0,0x000000,easeOutSine));
+		);
+	</action>
+	<action name="turnOffAllButtons">
+			set(layer[fs1Off].visible, true);
+			set(layer[fs1On].visible, false);
+			set(layer[fs2Off].visible, true);
+			set(layer[fs2On].visible, false);
+	</action> 
+</krpano>

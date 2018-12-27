@@ -72,8 +72,6 @@ module.exports = {
 			handler(ctx) {
 				this.validateParams(ctx);
 				console.log(ctx.params);
-				// /resource/projects/5c22115964a388257899f82d/getimage/fromtemplate/floorselector/?n=0&t=up
-
 				return this.collection.findById(ctx.modelID).exec()
 					.then((doc) => {
 						const imageName = ctx.params.n + "Floor" + (ctx.params.t=="up"?"Up":(ctx.params.t=="down"?"Down":ctx.params.t)) + ".jpg";
@@ -84,6 +82,17 @@ module.exports = {
 		}
 	},
 	actions: {
+		"build":{
+			cache: false,
+			handler(ctx){
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project => {
+
+					});
+			}
+		},
 		"delete/floorImage":{
 			cache: false,
 			handler(ctx){

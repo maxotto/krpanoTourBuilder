@@ -58,7 +58,7 @@
 			small
 			color="success"
 			:disabled="!build"
-			@click="$store.commit('setCurrentId', id); buildDlgShow=true"
+			@click="buildDlgShow=true"
 		>
 			Build
 		</v-btn>

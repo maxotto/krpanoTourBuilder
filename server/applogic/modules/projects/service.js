@@ -15,6 +15,7 @@ const unzipper = require("../../../libs/unzipper");
 const localLib = require("./models/lib");
 const fs = require("fs-extra");
 const path = require("path");
+const KrPanoFile = require('./models/krPanoTools');
 
 module.exports = {
 	settings: {
@@ -369,6 +370,10 @@ module.exports = {
 				.then((json) => {
 					this.notifyModelChanges(ctx, "updated", json);
 					return json;
+				})
+				.then( json => {
+					return localLib.saveTour(ctx.modelID, json.tour, config)
+						.then(done => {return Promise.resolve(json);});
 				});
 		},
 

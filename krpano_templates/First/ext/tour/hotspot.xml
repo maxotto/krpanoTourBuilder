@@ -1,0 +1,48 @@
+<krpano>
+    <!-- hotspot styles (black and white hotspots) -->
+    <style name="hotspot_ani_black"
+           url="hotspot_ani_black_64x64x20.png"
+           crop="0|0|64|64"
+           frames="20" framewidth="64" frameheight="64" frame="0"
+           onloaded="hotspot_animate();if(tooltip AND skin_settings.tooltips_hotspots, loadstyle(skin_tooltips); );"
+           tooltip=""
+           linkedscene=""
+           linkedscene_lookat=""
+           onclick="hotspotstyle_click();"
+    />
+
+    <style name="hotspot_ani_white"
+           url="hotspot_ani_white_64x64x20.png"
+           crop="0|0|64|64"
+           frames="20" framewidth="64" frameheight="64" frame="0"
+           onloaded="hotspot_animate();if(tooltip AND skin_settings.tooltips_hotspots, loadstyle(skin_tooltips); );"
+           tooltip=""
+           linkedscene=""
+           linkedscene_lookat=""
+           onclick="hotspotstyle_click();"
+    />
+
+    <!-- hotspot animation code -->
+    <action name="hotspot_animate">
+        if(loaded,
+        inc(frame,1,get(frames),0);
+        mul(ypos,frame,frameheight);
+        txtadd(crop,'0|',get(ypos),'|',get(framewidth),'|',get(frameheight));
+        delayedcall(0.03, hotspot_animate() );
+        );
+    </action>
+
+    <action name="hotspotstyle_click" scope="local">
+        if(caller.linkedscene,
+        copy(hs_linkedscene, caller.linkedscene);
+        if(caller.linkedscene_lookat, txtsplit(caller.linkedscene_lookat, ',', hs_lookat_h, hs_lookat_v, hs_lookat_fov); );
+        set(caller.enabled, false);
+        skin_hidetooltips();
+        tween(caller.depth|caller.alpha|caller.oy|caller.rx, 4000|0.0|-50|-60, 0.5, default,
+        skin_loadscene(get(hs_linkedscene), get(skin_settings.loadscene_blend));
+        if(hs_lookat_h !== null, skin_lookat(get(hs_lookat_h), get(hs_lookat_v), get(hs_lookat_fov)); );
+        skin_updatescroll();
+        );
+        );
+    </action>
+</krpano>

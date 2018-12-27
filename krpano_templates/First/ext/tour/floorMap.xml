@@ -1,0 +1,73 @@
+<krpano>
+	<action name="turnOffAllMaps">
+		set(layer[map_1st_floor].visible, false);
+		set(layer[map_2nd_floor].visible, false);
+		set(layer[map_basement].visible, false);
+	</action>
+
+	<!-- action for loading the scene when clicking on the map spots -->
+	<action name="mapspot_loadscene">
+		if(layer[%2].scale GT 0.25,
+			<!-- special mode for zoomed map: hide big map, loadscene, show small map -->
+			set(layer[%2].enabled, false);
+			tween(layer[%2].alpha, 0.0, 0.25, default,
+				loadscene(%1, null, MERGE, BLEND(1));
+
+				set(layer[%2].onclick, open_map(%2); );
+				layer[%2].changeorigin(leftbottom,leftbottom);
+
+				set(layer[%2].x, 0);
+				set(layer[%2].y, 0);
+				set(layer[%2].scale, 0.25);
+
+				set(events[sceneload].onloadcomplete,
+					delayedcall(1,
+						tween(layer[%2].alpha, 1.0, 0.5, default, set(layer[%2].enabled, true); );
+					  );
+				  );
+			  );
+		  ,
+			<!-- small map: just load the scene -->
+			loadscene(%1, null, MERGE, BLEND(1));
+		  );
+	</action>
+	
+	<!-- map opening - scale the map up to 100% (or smaller if the screen is too small) -->
+	<action name="open_map">
+		set(layer[%1].onclick, close_map(%1); );
+		layer[%1].changeorigin(center,center);
+
+		set(bigscale,1);
+		if(layer[%1].imagewidth GT stagewidth, div(bigscale, stagewidth, layer[%1].imagewidth); );
+
+		tween(layer[%1].x, 0);
+		tween(layer[%1].y, 0);
+		tween(layer[%1].scale, get(bigscale));
+	</action>
+	
+	<!-- map closing - scale the map back to 0.25 of its image pixelsize -->
+	<action name="close_map">
+		set(layer[%1].onclick, open_map(%1); );
+		layer[%1].changeorigin(leftbottom,leftbottom);
+
+		tween(layer[%1].x, 0);
+		tween(layer[%1].y, 0);
+		tween(layer[%1].scale, 0.25);
+	</action>
+	
+	<!-- active spot image (overlays the normal spot) -->
+	<layer name="activespot" visible="true" url="camicon_red.png" keep="true"
+	       align="lefttop" zorder="2" scale.mobile="2"
+	       />
+
+	<!-- radar layer (overlays the normal spot too, but is behind the activespot image) -->
+	<layer name="radar" keep="true"
+		   parent="spot1_1"
+	       url.flash="%SWFPATH%/plugins/radar.swf"
+	       url.html5="%SWFPATH%/plugins/radar.js"
+	       align="center" zorder="5"
+	       scale.mobile="1.5"
+	       fillalpha="0.5" fillcolor="0x7F5F3F"
+	       linewidth="1.0" linecolor="0xE0E0A0" linealpha="0.5"
+	       />
+</krpano>

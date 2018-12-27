@@ -14,6 +14,8 @@ let uploader = require("../../../libs/chunkUploader")({
 const unzipper = require("../../../libs/unzipper");
 const localLib = require("./models/lib");
 const fs = require("fs-extra");
+const path = require("path");
+const KrPanoFile = require('./models/krPanoTools');
 
 module.exports = {
 	settings: {
@@ -30,12 +32,197 @@ module.exports = {
 
 		// modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
 	},
+	resources:{
+		"fromtour/scene/thumb":{
+			cache: true,
+			handler(ctx){
+				this.validateParams(ctx);
+				const scene = ctx.params.scene;
+				const sceneFolder = scene.substring(6) + ".tiles";
+				console.log(ctx.params);
+				return this.collection.findById(ctx.modelID).exec()
+					.then((project) => {
+						const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+						const mapsFolder = path.resolve(folders.source, "panos", sceneFolder);
+						return Promise.resolve(path.resolve(mapsFolder, "thumb.jpg"));
+					});
 
+			}
+		},
+		"getimage/floormap": {
+			cache: false,
+			handler(ctx){
+				this.validateParams(ctx);
+				console.log(ctx.params);
+				return this.collection.findById(ctx.modelID).exec()
+					.then((project) => {
+						console.log(project.floorSelect);
+						const index = project.floorSelect.findIndex((element) => {
+							return (element.floor === ctx.params.floor);
+						});
+						const imageName = project.floorSelect[index].image;
+						const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+						const mapsFolder = path.resolve(folders.source, "custom");
+						return Promise.resolve(path.resolve(mapsFolder, imageName));
+					});
+			}
+		},
+		"getimage/fromtemplate/floorselector": {
+			cache: true,
+			handler(ctx) {
+				this.validateParams(ctx);
+				console.log(ctx.params);
+				// /resource/projects/5c22115964a388257899f82d/getimage/fromtemplate/floorselector/?n=0&t=up
+
+				return this.collection.findById(ctx.modelID).exec()
+					.then((doc) => {
+						const imageName = ctx.params.n + "Floor" + (ctx.params.t=="up"?"Up":(ctx.params.t=="down"?"Down":ctx.params.t)) + ".jpg";
+						const templateFolder = localLib.getImagePathByTemplate(doc.template, config);
+						return Promise.resolve(path.resolve(templateFolder, "ext", "tour", imageName));
+					});
+			}
+		}
+	},
 	actions: {
+		"delete/floorImage":{
+			cache: false,
+			handler(ctx){
+				const floor = ctx.params.floor;
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				let foundIndex;
+				let fileToDel;
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project=>{
+						foundIndex = project.floorSelect.findIndex((element) => {
+							return (element.floor === floor);
+						});
+						if (foundIndex >= 0) {
+							fileToDel = project.floorSelect[foundIndex].image;
+							project.floorSelect.splice(foundIndex,1);
+							project.state.floorsImages = (project.floorSelect.length >0);
+							project.state = localLib.calcState(project);
+							return project.save()
+								.then((project) => {
+									return this.toJSON(project);
+								})
+								.then((json) => {
+									return this.populateModels(json);
+								})
+								.then((json) => {
+									this.notifyModelChanges(ctx, "updated", json);
+									return json;
+								});
+
+						} else {
+							return Promise.reject(
+								{
+									success: false,
+									message: 'No floor to delete',
+								}
+							);
+						}
+					})
+					.then(project=> {
+						return new Promise((resolve, reject) => {
+							const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+							const folder = path.resolve(folders.source, "custom");
+							fs.remove(path.resolve(folder,fileToDel), err => {
+								if (err) {
+									console.log(err);
+									reject(err);
+								} else {
+									resolve({
+										success: true,
+										message: "Floor deleted",
+										project: project,
+									});
+								}
+							});
+						});
+					});
+			}
+		},
+		"upload/floorImage":{
+			cache:false,
+			handler(ctx){
+				const floor = ctx.params.floor;
+				let newFileName;
+				let resultToSend;
+				this.validateParams(ctx);
+				const form = new multiparty.Form();
+				return new Promise(function(resolve, reject){
+					form.parse(ctx.req, function(err, fields, files) {
+						if (err) {
+							reject(err);
+						} else {
+							const _fields = {};
+							Object.keys(fields).forEach(function(key) {
+								_fields[key] = fields[key][0];
+							});
+							resolve({
+								fields: _fields,
+								file: files.file[0],
+							});
+						}
+					});
+				}).then(uploadInfo=>{
+					const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+					const destFolder = path.resolve(folders.source, "custom");
+					fs.ensureDirSync(destFolder);
+					const filename = uploadInfo.file.originalFilename;
+					const parts = path.parse(filename);
+					newFileName = "map_" + floor + "_floor" + parts.ext;
+					return uploader.simpleUpload(uploadInfo.file.path, destFolder, newFileName, {floor: floor, file: newFileName});
+				}).then(res => {
+					resultToSend = res;
+					ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+					this.validateParams(ctx);
+					return this.collection.findById(ctx.modelID).exec()
+						.then((project) => {
+							// console.log(project);
+							if (!project.floorSelect) {
+								project.floorSelect = [];
+							}
+							const index = project.floorSelect.findIndex((element) => {
+								return (element.floor === floor);
+							});
+							if (index === -1) {
+								project.floorSelect.push(
+									{
+										floor: floor,
+										image: newFileName,
+									}
+								);
+							} else {
+								project.floorSelect[index].image = newFileName;
+							}
+							project.state.floorsImages = true;
+							project.state = localLib.calcState(project);
+
+							project.state.uploaded = true;
+							return project.save()
+								.then((project) => {
+									return this.toJSON(project);
+								})
+								.then((json) => {
+									return this.populateModels(json);
+								})
+								.then((json) => {
+									this.notifyModelChanges(ctx, "updated", json);
+									resultToSend.project = json;
+									return resultToSend;
+								});
+						});
+				}).then((res) =>{
+					console.log({res});
+					return Promise.resolve(res);
+				});
+			}
+		},
 		upload: {
 			cache: false,
 			handler(ctx) {
-				const fields = [];
 				this.validateParams(ctx);
 				const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
 				const form = new multiparty.Form();
@@ -183,6 +370,10 @@ module.exports = {
 				.then((json) => {
 					this.notifyModelChanges(ctx, "updated", json);
 					return json;
+				})
+				.then( json => {
+					return localLib.saveTour(ctx.modelID, json.tour, config)
+						.then(done => {return Promise.resolve(json);});
 				});
 		},
 

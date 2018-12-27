@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<v-app>
 		<v-snackbar
 			v-model="snackbar.visible"
 			:bottom="snackbar.y === 'bottom'"
@@ -20,7 +20,8 @@
 			</v-btn>
 		</v-snackbar>
 		<h1>Initiate project</h1>
-		<template v-if="project">{{project.state}}</template>
+		<p v-if="project">{{project.floorSelect}}</p>
+		<p v-if="project">{{floorSelect}}</p>
 		<span style="color: red;"><b> {{lastError}}</b></span><br>
 		<v-stepper v-model="step" vertical v-if="project">
 			<v-stepper-step :complete="step > 1" step="1">
@@ -31,7 +32,6 @@
 			<v-stepper-content step="1">
 				<v-card color="grey lighten-1" class="mb-5">
 					<v-flex xs12 style="margin: 15px;">
-						<v-subheader class="pl-0">Select number of floors</v-subheader>
 						<div class="floorSelectorContainer">
 							<v-layout row wrap v-for="(template, i) in floorsTemplate" :key="`${i}`"
 									  class="floorSelector" align-content-center>
@@ -42,7 +42,7 @@
 									></v-switch>
 								</v-flex>
 								<v-flex xs2 align-content-center>
-									<img :src="`/getimage/fromtemplate/${id}/floorselector/${i}/up`"/>
+									<img :src="`resource/projects/${id}/getimage/fromtemplate/floorselector/?n=${i}&t=up`"/>
 								</v-flex>
 								<v-flex xs4 align-content-center>
 									<upload-block :template="template" :recordId="id" @clicked="uploaded"
@@ -83,7 +83,7 @@
 							<v-img
 								:id="`scene-pic-${i}`"
 								class="scene-pic"
-								:src="`getimage/fromtour/${id}/scene/thumb/${scene['$'].name}`"
+								:src="`resource/projects/${id}/fromtour/scene/thumb?scene=${scene['$'].name}`"
 								max-height="120"
 								aspect-ratio="1"
 								contain
@@ -112,10 +112,10 @@
 						</v-flex>
 						<v-flex xs1>
 							<v-icon v-if="scenesData[i].floor >= 0" color="green" large>
-								mdi-check-all
+								check_circle_outline
 							</v-icon>
 							<v-icon v-else color="red" large>
-								mdi-alert-circle
+								error_outline
 							</v-icon>
 						</v-flex>
 					</v-layout>
@@ -128,10 +128,8 @@
 				</v-btn>
 				<v-btn color="green" :disabled="!step2Changed" @click="saveTour">
 					<v-icon>
-						mdi-content-save-all
-					</v-icon>
-					Save job
-				</v-btn>
+						cloud_upload
+					</v-icon>Save job</v-btn>
 				<v-btn color="primary" @click="step = 3" :disabled="!checkStep2">Continue</v-btn>
 			</v-stepper-content>
 
@@ -150,7 +148,7 @@
 				<v-btn flat>Cancel</v-btn>
 			</v-stepper-content>
 		</v-stepper>
-	</div>
+	</v-app>
 </template>
 
 <script>
@@ -234,6 +232,22 @@
 			]),
 		},
 		methods: {
+			...mapActions("projects", [
+				"downloadRows",
+				"created",
+				"updated",
+				"removed",
+				"selectRow",
+				"clearSelection",
+				"saveRow",
+				"updateRow",
+				"removeRow"
+			]),
+			setProject(project){
+				this.project = project;
+				this.tour = JSON.parse(this.project.tour);
+				this.updateFloorMaps();
+			},
 			saveTour() {
 				this.step2Changed = false;
 				this.updateScenes();
@@ -247,7 +261,6 @@
 				});
 			},
 			updateScenesFloors() {
-
 				this.scenesData.forEach((scene, i) => {
 					const found = this.floorSelect.findIndex((fs) => {
 						return fs.value == scene.floor;
@@ -263,6 +276,7 @@
 				this.checkStep(1);
 			},
 			checkStep(step) {
+				console.log("Step check", step);
 				if (step === 1) {
 					let ready = true;
 					let hasOne = false;
@@ -275,13 +289,39 @@
 						}
 					});
 					this.checkStep1 = ready && hasOne;
+					console.log("this.checkStep1=", this.checkStep1);
 				}
 			},
-			uploaded(floorNumber) {
-				// console.log("Uploaded", floorNumber);
-				this.getProject();
+			uploaded(data) {
+				// console.log("Uploaded", data);
+				const floor = data.floor;
+				const mapFile = data.file;
+				if(data.success === true && data.project){
+					this.setProject(data.project);
+				}
+				//this.getProject();
 			},
 			saveProject() {
+				console.log("Try to save project");
+				const data = this.project;
+				this.updateRow({
+					title: data.title,
+					address: data.address,
+					folder: data.folder,
+					outFolder: data.outFolder,
+					template: data.template,
+					location: data.location,
+					id: data._id,
+					showMap: data.showMap,
+					useCustomMap: data.useCustomMap,
+					language: data.language,
+					loadingtext: data.loadingtext,
+					googleMapUnits: data.googleMapUnits,
+					useFixedZoom: data.useFixedZoom,
+					iniZoom: data.iniZoom,
+					state: data.state,
+					tour: data.tour,
+				});
 				/*
 				ProjectsService.updateProject({
 					title: this.project.title,
@@ -309,9 +349,11 @@
 				*/
 			},
 			getProject() {
-
-				console.log(this.id);
-
+				const i = this.projects.findIndex(p => {
+					return (p._id === this.id);
+				});
+				this.setProject(this.projects[i]);
+				this.composeScenesForEditor();
 			},
 			updateFloorMaps() {
 				this.floorSelect = [{
@@ -332,8 +374,10 @@
 								label: this.floorsTemplate[i].name,
 							}
 						);
+						const image = this.project.floorSelect[index].image;
 						setTimeout(() => {
-							this.floorsTemplate[i].image = `getimage/floormap/${this.id}/${i}?rnd` + +Math.random();
+							// this.floorsTemplate[i].image = `getimage/floormap/${this.id}/${i}?rnd` + +Math.random();
+							this.floorsTemplate[i].image = `resource/projects/${this.id}/getimage/floormap?floor=${i}&rnd=` + Math.random();
 						}, 100);
 					} else {
 						// console.log("Clear state", this.floorsTemplate);
@@ -364,22 +408,24 @@
 					}
 				});
 				changes.forEach(change => {
-					this.axios.delete(`/delete/floorImage/${this.id}/${this.floorsTemplate[change].number}`)
+					this.axios.delete(`api/projects/${this.id}/delete/floorImage?floor=${this.floorsTemplate[change].number}`)
 						.then(res => {
-							if (res.data.success) {
-								this.getProject();
+							const data = res.data.data;
+							if (data.success === true && data.project) {
+								this.setProject(data.project);
 							} else {
-								// console.log(res);
+								console.log(res);
 							}
 						})
 						.catch(err => {
-							// console.log(err);
+							console.log(err);
 						});
 				});
 			},
 			composeScenesForEditor() {
 				if (this.tour) {
 					this.scenesData = [];
+					console.log("this.tour=",this.tour);
 					this.tour.scene.forEach((scene, index) => {
 						this.scenesData.push(
 							{
@@ -428,5 +474,6 @@
 
 	.floorSelectorContainer {
 		max-width: 600px;
+		width: 600px;
 	}
 </style>

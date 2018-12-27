@@ -19,6 +19,8 @@ Vue.use(uploader);
 
 import axios from "axios";
 axios.defaults.headers.post["Content-Type"] = "application/json";
+import VueAxios from 'vue-axios';
+Vue.use(VueAxios, axios);
 
 import Filters from "./core/filters";
 import VueI18Next from "./core/i18next.js";

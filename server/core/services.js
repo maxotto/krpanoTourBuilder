@@ -104,7 +104,72 @@ class Services extends EventEmitter {
 	registerRoutes(app) {
 		console.log('Register routes');
 		let self = this;
+		// register routes for resources
+		console.log();
+		_.forIn(this.services, (service, name) => {
+			// console.log(service);
+			if (service.resources) {
+				let router = express.Router();
+				router.use(auth.tryAuthenticateWithApiKey);
+				let idParamName = service.$settings.idParamName || "id";
+				let lastRoutes = [];
+				_.forIn(service.resources, (resourceFunc, name) => {
+					console.log({resourceFunc}, {name});
+					let resource = resourceFunc.settings;
+					resource.handler = resourceFunc;
+					if (!_.isFunction(resource.handler)) {
+						throw new Error(`Missing handler function in '${name}' resource in '${service.name}' service!`);
+					}
 
+					// Make the request handler for action
+					let handler = (req, res) => {
+						let ctx = Context.CreateFromResource(service, resource, app, req, res);
+						logger.debug(`Request resource '${service.namespace}/${resource.name}' (ID: ${ctx.id})`, ctx.params);
+						console.time("Resource request");
+						self.emit("request", ctx);
+						let cacheKey = service.getCacheKey(resource.name, ctx.params);
+
+						Promise.resolve()
+						// Resolve model if ID provided
+							.then(() => {
+								return ctx.resolveModel();
+							})
+
+							// Check permission
+							.then(() => {
+								return ctx.checkPermission();
+							})
+
+							// Call the action handler
+							.then(() => {
+								return resource.handler(ctx);
+							})
+							// Response the result
+							.then((fileResource) => {
+								res.append("Request-Id", ctx.id);
+								res.sendFile(fileResource);
+							})// Response the error
+							.catch((err) => {
+								logger.error(err);
+								console.log("ERRRROOOORRR",{err});
+								response.json(res, null, err);
+							})
+
+							.then(() => {
+								self.emit("response", ctx);
+								console.timeEnd("Resource request");
+								//logger.debug("Response time:", ctx.responseTime(), "ms");
+							});
+
+					};
+					router.get("/" + name, handler);
+					router.post("/" + name, handler);
+					router.get("/:" + idParamName + "/" + name, handler);
+					router.post("/:" + idParamName + "/" + name, handler);
+					app.use("/resource/" + service.namespace, router);
+				});
+			}
+		});
 		//logger.info("Register routes ", this.services);
 		_.forIn(this.services, (service, name) => {
 			if (service.$settings.rest !== false && service.actions) {
@@ -118,7 +183,6 @@ class Services extends EventEmitter {
 
 				let lastRoutes = [];
 
-				console.log(service.actions);
 				_.forIn(service.actions, (actionFunc, name) => {
 					let action = actionFunc.settings;
 					action.handler = actionFunc;
@@ -137,38 +201,38 @@ class Services extends EventEmitter {
 
 						Promise.resolve()
 
-						// Resolve model if ID provided
-						.then(() => {
-							return ctx.resolveModel();
-						})
+							// Resolve model if ID provided
+							.then(() => {
+								return ctx.resolveModel();
+							})
 
-						// Check permission
-						.then(() => {
-							return ctx.checkPermission();
-						})
+							// Check permission
+							.then(() => {
+								return ctx.checkPermission();
+							})
 
-						// Call the action handler
-						.then(() => {
-							return action.handler(ctx);
-						})
+							// Call the action handler
+							.then(() => {
+								return action.handler(ctx);
+							})
 
-						// Response the result
-						.then((json) => {
-							res.append("Request-Id", ctx.id);
-							response.json(res, json);
-						})
+							// Response the result
+							.then((json) => {
+								res.append("Request-Id", ctx.id);
+								response.json(res, json);
+							})
 
-						// Response the error
-						.catch((err) => {
-							logger.error(err);
-							response.json(res, null, err);
-						})
+							// Response the error
+							.catch((err) => {
+								logger.error(err);
+								response.json(res, null, err);
+							})
 
-						.then(() => {
-							self.emit("response", ctx);
-							console.timeEnd("REST request");
-							//logger.debug("Response time:", ctx.responseTime(), "ms");
-						});
+							.then(() => {
+								self.emit("response", ctx);
+								console.timeEnd("REST request");
+								//logger.debug("Response time:", ctx.responseTime(), "ms");
+							});
 
 					};
 
@@ -179,12 +243,14 @@ class Services extends EventEmitter {
 					// 		POST /api/namespace/vote?id=123
 					router.get("/" + name, handler);
 					router.post("/" + name, handler);
+					router.delete("/" + name, handler);
 
 					// You can call with ID in the path 
 					// 		GET  /api/namespace/123/vote
 					// 		POST /api/namespace/123/vote
 					router.get("/:" + idParamName + "/" + name, handler);
 					router.post("/:" + idParamName + "/" + name, handler);
+					router.delete("/:" + idParamName + "/" + name, handler);
 
 					// Create default RESTful handlers
 					switch (name) {

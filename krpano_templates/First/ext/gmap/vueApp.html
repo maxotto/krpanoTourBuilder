@@ -1,0 +1,147 @@
+
+<!-- add this to allow Google Maps works -->
+<div id="map" style="background-color: azure; color: black; overflow-y: hidden">
+    <div id="googleApp" style="z-index: 8000; overflow-y: hidden">
+        <v-app>
+            <v-layout row justify-center v-resize="onTableParentResize">
+                <v-dialog v-model="dialog" fullscreen hide-overlay transition="dialog-bottom-transition">
+                    <div v-show="showTable" id="data-table"
+                         :style="{
+                                'position': 'absolute',
+                                'bottom': '37px',
+                                'left': '5px',
+                                'width': `${tableWidth}px`,
+                                'z-index': '8500',
+                                'max-height': `${tableHeight}px`,
+                                'height': `${tableHeight}px`,
+                                'overflow-y': `auto`}">
+                        <v-data-table
+                                :headers="placesList.headers"
+                                :items="placesList.places"
+                                hide-actions
+                                class="elevation-5"
+                        >
+                            <template slot="items" slot-scope="props">
+                                <tr @click="showBalloon(props.item.markerIndex)">
+                                    <td align="center">{{ props.item.name }}</td>
+                                    <td align="center">{{ props.item.distanceText }}</td>
+                                    <td align="center"><v-rating
+                                            background-color="orange lighten-3"
+                                            color="orange"
+                                            color="yellow darken-3"
+                                            half-increments
+                                            size="8"
+                                            v-model="props.item.rating"></v-rating>
+                                        {{ props.item.rating }}
+                                    </td>
+                                </tr>
+                            </template>
+                        </v-data-table>
+                    </div>
+                    <v-flex>
+                        <v-btn style="z-index: 9000"
+                               absolute
+                               dark
+                               top
+                               left
+                               small
+                               color="error"
+                               icon @click.native="dialog = false"
+                        >
+                            <v-icon>close</v-icon>
+                        </v-btn>
+                    </v-flex>
+                    <v-container fluid row fill-height style="padding: unset">
+                        <v-layout>
+                            <v-flex>
+                                <google-map
+                                        ref="mapRef"
+                                        :center="center"
+                                        :zoom="zoom"
+                                        :options="mapOptions"
+                                        style="width: 100%; height: 100%" id="myPanel">
+                                    <google-marker :position="center" :icon="centerIcon"></google-marker>
+                                    <gmap-info-window :options="infoOptions" :position="infoWindowPos" :opened="infoWinOpen" @closeclick="infoWinOpen=false">
+                                        <div v-html="infoContent"></div>
+                                    </gmap-info-window>
+                                </google-map>
+                                <v-btn-toggle
+                                        id="select-panel"
+                                        v-model="valuesToSearch"
+                                        multiple
+                                        style="position: absolute; z-index: 9000; bottom: 5px; left: 5px">
+                                    <v-btn
+                                            small
+                                            color="info"
+                                            value="school"
+                                            :loading="placesList.loading"
+                                            :disabled="placesList.loading"
+                                    >
+                                        Schools
+                                        <span slot="loader" class="custom-loader">
+                                            <v-icon light>cached</v-icon>
+                                        </span>
+                                    </v-btn>
+                                    <v-btn
+                                            small
+                                            color="purple"
+                                            value="eat-drink"
+                                            :loading="placesList.loading"
+                                            :disabled="placesList.loading"
+                                    >
+                                        Food&drink
+                                        <span slot="loader" class="custom-loader">
+                                            <v-icon light>cached</v-icon>
+                                        </span>
+                                    </v-btn>
+                                    <v-btn
+                                            small
+                                            color="orange"
+                                            value="entertainment"
+                                            :loading="placesList.loading"
+                                            :disabled="placesList.loading"
+                                    >
+                                        Entertainment
+                                        <span slot="loader" class="custom-loader">
+                                            <v-icon light>cached</v-icon>
+                                        </span>
+                                    </v-btn>
+                                    <v-btn
+                                            small
+                                            color="cyan"
+                                            value="stores"
+                                            :loading="placesList.loading"
+                                            :disabled="placesList.loading"
+                                    >
+                                        Shopping
+                                        <span slot="loader" class="custom-loader">
+                                            <v-icon light>cached</v-icon>
+                                        </span>
+                                    </v-btn>
+                                </v-btn-toggle>
+                                <v-btn-toggle
+                                        id = "show-table-button"
+                                        v-model = "showTableButtonSelected"
+                                        :style="{
+                                            'position': 'absolute',
+                                            'z-index': '9000',
+                                            'bottom': '5px',
+                                            'left': `${showTableButtonLeft}px`
+                                        }">
+                                    <v-btn
+                                       v-if = "showTableButton"
+                                       small
+                                       @click.native="tableDialog = true"
+                                    >
+                                        <v-icon color="indigo">list_alt</v-icon>
+                                    </v-btn>
+
+                                </v-btn-toggle>
+                            </v-flex>
+                        </v-layout>
+                    </v-container>
+                </v-dialog>
+            </v-layout>
+        </v-app>
+    </div>
+</div>

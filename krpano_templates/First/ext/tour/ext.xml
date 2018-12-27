@@ -1,0 +1,25 @@
+<krpano>
+    <display autofullscreen="false" />
+    <contextmenu fullscreen="false" versioninfo="false" />
+    <include url="floorSelector.xml" />
+    <include url="floorMap.xml" />
+    <include url="../gmap/googleMap.xml" />
+    <include url="hotspot.xml" />
+
+    <action name="updateradar" scope="local" args="spot, heading">
+        set(layer[activespot].parent, get(spot));
+        set(layer[radar].parent, get(spot));
+        set(layer[radar].heading, get(heading));
+    </action>
+    <action name="setFloorMap">
+        turnOffAllMaps();
+        set(layer[%1].visible, true);
+        set(floor_settings.current, get(layer[%1].floor));
+        setButtonsByFloor();
+    </action>
+
+    <action name="assign_dom_id" type="Javascript">
+        caller.sprite.id = args[1];
+    </action>
+
+</krpano>

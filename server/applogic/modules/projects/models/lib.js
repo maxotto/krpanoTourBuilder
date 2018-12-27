@@ -50,7 +50,21 @@ exports.checkTour = function(id, config){
 		);
 };
 
+exports.saveTour = function(id, tour, config){
+	const folders = this.getFoldersByProjectId(id, config);
+	const tourFileName = path.resolve(folders.source, "tour.xml");
+	const tourFileTool = new KrPanoFile(tourFileName);
+	return tourFileTool.save(JSON.parse(tour));
+};
+
 exports.deleteTourFolder = function(id, config){
 	const folders = this.getFoldersByProjectId(id, config);
 	return fs.remove(folders.root);
+};
+
+exports.getImagePathByTemplate = function(template, config){
+	if(template === "First"){
+		return path.resolve(config.rootPath, "krpano_templates", "First");
+	}
+	return undefined;
 };

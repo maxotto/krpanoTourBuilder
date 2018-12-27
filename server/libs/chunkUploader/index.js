@@ -2,6 +2,7 @@
 const assert = require("assert");
 const path = require("path");
 const debug = require("debug")("chunkUploader");
+const fs = require("fs-extra");
 
 const Storage = require("./storage");
 
@@ -16,20 +17,39 @@ module.exports = function(opts) {
 
 	return {
 		"upload": function(chunk_params, chunk_file){
-			console.log("chunk received");
 			const uploadedFile = {};
 			return storage.store_chunk(chunk_params, chunk_file)
 				.then(() => {
 					return storage.verify_chunks(chunk_params, chunk_file);
 				})
 				.then(() => {
-					console.log('Need to assemble');
 					return storage.assemble_chunks(chunk_params, chunk_file);
 				}, (err)=>{
-					console.log("Reject chunk ->",err);
 					return Promise.reject(new Error(err));
 				})
 			;
+		},
+		"simpleUpload": function(uploadedFile, destFolder, destName, response){
+			console.log({uploadedFile},{destFolder},{destName});
+			return new Promise((resolve, reject) => {
+				fs.remove(path.resolve(destFolder, destName), err => {
+					if(err) {
+						console.log("remove err=", err);
+						reject(err);
+					} else {
+						fs.move(uploadedFile, path.resolve(destFolder, destName), err => {
+							if (err) {
+								console.log("move err=",err);
+								reject(err);
+							} else {
+								response.success = true;
+								resolve(response);
+							}
+						});
+
+					}
+				});
+			});
 		}
 	};
 };

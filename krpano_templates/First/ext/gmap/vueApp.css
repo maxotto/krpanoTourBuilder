@@ -1,0 +1,63 @@
+table.v-table tbody td {
+    height: 19px !important;
+    padding: 0 5px !important;
+}
+.v-btn--left {
+    left: 1px !important;
+}
+.v-btn--top.v-btn--absolute.v-btn--small {
+    top: 1px !important;
+}
+.v-btn--bottom.v-btn--absolute.v-btn--small {
+    bottom: 1px !important;
+}
+.dialog { z-index: inherit }
+.menuable__content__active { /*Fix for Safari dialog display. Reference Vuetify issue #2111 */ z-index:9000!important; }
+.container {
+   /* padding: 0px !important;*/
+}
+
+.v-btn__content {
+    text-transform: none !important;
+}
+
+.custom-loader {
+    animation: loader 1s infinite;
+    display: flex;
+}
+@-moz-keyframes loader {
+    from {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+@-webkit-keyframes loader {
+    from {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+@-o-keyframes loader {
+    from {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+@keyframes loader {
+    from {
+        transform: rotate(0);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.v-rating .v-icon {
+    padding: unset!important;
+}

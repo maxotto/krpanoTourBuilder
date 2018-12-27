@@ -1,5 +1,5 @@
 <template>
-	<div>
+	<v-app>
 		<v-snackbar
 			v-model="snackbar.visible"
 			:bottom="snackbar.y === 'bottom'"
@@ -21,6 +21,7 @@
 		</v-snackbar>
 		<h1>Initiate project</h1>
 		<p v-if="project">{{project.floorSelect}}</p>
+		<p v-if="project">{{floorSelect}}</p>
 		<span style="color: red;"><b> {{lastError}}</b></span><br>
 		<v-stepper v-model="step" vertical v-if="project">
 			<v-stepper-step :complete="step > 1" step="1">
@@ -111,10 +112,10 @@
 						</v-flex>
 						<v-flex xs1>
 							<v-icon v-if="scenesData[i].floor >= 0" color="green" large>
-								mdi-check-all
+								check_circle_outline
 							</v-icon>
 							<v-icon v-else color="red" large>
-								mdi-alert-circle
+								error_outline
 							</v-icon>
 						</v-flex>
 					</v-layout>
@@ -127,10 +128,8 @@
 				</v-btn>
 				<v-btn color="green" :disabled="!step2Changed" @click="saveTour">
 					<v-icon>
-						mdi-content-save-all
-					</v-icon>
-					Save job
-				</v-btn>
+						cloud_upload
+					</v-icon>Save job</v-btn>
 				<v-btn color="primary" @click="step = 3" :disabled="!checkStep2">Continue</v-btn>
 			</v-stepper-content>
 
@@ -149,7 +148,7 @@
 				<v-btn flat>Cancel</v-btn>
 			</v-stepper-content>
 		</v-stepper>
-	</div>
+	</v-app>
 </template>
 
 <script>
@@ -233,6 +232,17 @@
 			]),
 		},
 		methods: {
+			...mapActions("projects", [
+				"downloadRows",
+				"created",
+				"updated",
+				"removed",
+				"selectRow",
+				"clearSelection",
+				"saveRow",
+				"updateRow",
+				"removeRow"
+			]),
 			setProject(project){
 				this.project = project;
 				this.tour = JSON.parse(this.project.tour);
@@ -292,6 +302,26 @@
 				//this.getProject();
 			},
 			saveProject() {
+				console.log("Try to save project");
+				const data = this.project;
+				this.updateRow({
+					title: data.title,
+					address: data.address,
+					folder: data.folder,
+					outFolder: data.outFolder,
+					template: data.template,
+					location: data.location,
+					id: data._id,
+					showMap: data.showMap,
+					useCustomMap: data.useCustomMap,
+					language: data.language,
+					loadingtext: data.loadingtext,
+					googleMapUnits: data.googleMapUnits,
+					useFixedZoom: data.useFixedZoom,
+					iniZoom: data.iniZoom,
+					state: data.state,
+					tour: data.tour,
+				});
 				/*
 				ProjectsService.updateProject({
 					title: this.project.title,

@@ -99,7 +99,7 @@
 			},
 			inputFile(newFile, oldFile) {
 				if (newFile && newFile.success !== false) {
-					console.log("success??", newFile, oldFile, this.template.number);
+					// console.log("success??", newFile, oldFile, this.template.number);
 					//this.response = newFile.response;
 					this.$emit("clicked", newFile.response.data);
 				}

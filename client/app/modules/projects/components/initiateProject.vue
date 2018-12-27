@@ -20,7 +20,7 @@
 			</v-btn>
 		</v-snackbar>
 		<h1>Initiate project</h1>
-		<template v-if="project">{{project.floorSelect}}</template>
+		<p v-if="project">{{project.floorSelect}}</p>
 		<span style="color: red;"><b> {{lastError}}</b></span><br>
 		<v-stepper v-model="step" vertical v-if="project">
 			<v-stepper-step :complete="step > 1" step="1">
@@ -82,7 +82,7 @@
 							<v-img
 								:id="`scene-pic-${i}`"
 								class="scene-pic"
-								:src="`getimage/fromtour/${id}/scene/thumb/${scene['$'].name}`"
+								:src="`resource/projects/${id}/fromtour/scene/thumb?scene=${scene['$'].name}`"
 								max-height="120"
 								aspect-ratio="1"
 								contain
@@ -233,6 +233,11 @@
 			]),
 		},
 		methods: {
+			setProject(project){
+				this.project = project;
+				this.tour = JSON.parse(this.project.tour);
+				this.updateFloorMaps();
+			},
 			saveTour() {
 				this.step2Changed = false;
 				this.updateScenes();
@@ -246,7 +251,6 @@
 				});
 			},
 			updateScenesFloors() {
-
 				this.scenesData.forEach((scene, i) => {
 					const found = this.floorSelect.findIndex((fs) => {
 						return fs.value == scene.floor;
@@ -262,6 +266,7 @@
 				this.checkStep(1);
 			},
 			checkStep(step) {
+				console.log("Step check", step);
 				if (step === 1) {
 					let ready = true;
 					let hasOne = false;
@@ -274,16 +279,16 @@
 						}
 					});
 					this.checkStep1 = ready && hasOne;
+					console.log("this.checkStep1=", this.checkStep1);
 				}
 			},
 			uploaded(data) {
-				console.log("Uploaded", data);
+				// console.log("Uploaded", data);
 				const floor = data.floor;
 				const mapFile = data.file;
 				if(data.success === true && data.project){
-					this.project = data.project;
+					this.setProject(data.project);
 				}
-				this.updateFloorMaps();
 				//this.getProject();
 			},
 			saveProject() {
@@ -317,8 +322,8 @@
 				const i = this.projects.findIndex(p => {
 					return (p._id === this.id);
 				});
-				this.project = this.projects[i];
-				this.updateFloorMaps();
+				this.setProject(this.projects[i]);
+				this.composeScenesForEditor();
 			},
 			updateFloorMaps() {
 				this.floorSelect = [{
@@ -373,22 +378,24 @@
 					}
 				});
 				changes.forEach(change => {
-					this.axios.delete(`/delete/floorImage/${this.id}/${this.floorsTemplate[change].number}`)
+					this.axios.delete(`api/projects/${this.id}/delete/floorImage?floor=${this.floorsTemplate[change].number}`)
 						.then(res => {
-							if (res.data.success) {
-								this.getProject();
+							const data = res.data.data;
+							if (data.success === true && data.project) {
+								this.setProject(data.project);
 							} else {
-								// console.log(res);
+								console.log(res);
 							}
 						})
 						.catch(err => {
-							// console.log(err);
+							console.log(err);
 						});
 				});
 			},
 			composeScenesForEditor() {
 				if (this.tour) {
 					this.scenesData = [];
+					console.log("this.tour=",this.tour);
 					this.tour.scene.forEach((scene, index) => {
 						this.scenesData.push(
 							{

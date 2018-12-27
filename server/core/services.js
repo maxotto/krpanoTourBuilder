@@ -243,12 +243,14 @@ class Services extends EventEmitter {
 					// 		POST /api/namespace/vote?id=123
 					router.get("/" + name, handler);
 					router.post("/" + name, handler);
+					router.delete("/" + name, handler);
 
 					// You can call with ID in the path 
 					// 		GET  /api/namespace/123/vote
 					// 		POST /api/namespace/123/vote
 					router.get("/:" + idParamName + "/" + name, handler);
 					router.post("/:" + idParamName + "/" + name, handler);
+					router.delete("/:" + idParamName + "/" + name, handler);
 
 					// Create default RESTful handlers
 					switch (name) {

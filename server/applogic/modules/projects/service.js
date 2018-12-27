@@ -32,6 +32,22 @@ module.exports = {
 		// modelPropFilter: "_id user title address floorSelect template location showMap useCustomMap language loadingtext googleMapUnits useFixedZoom iniZoom state tour"
 	},
 	resources:{
+		"fromtour/scene/thumb":{
+			cache: true,
+			handler(ctx){
+				this.validateParams(ctx);
+				const scene = ctx.params.scene;
+				const sceneFolder = scene.substring(6) + ".tiles";
+				console.log(ctx.params);
+				return this.collection.findById(ctx.modelID).exec()
+					.then((project) => {
+						const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+						const mapsFolder = path.resolve(folders.source, "panos", sceneFolder);
+						return Promise.resolve(path.resolve(mapsFolder, "thumb.jpg"));
+					});
+
+			}
+		},
 		"getimage/floormap": {
 			cache: false,
 			handler(ctx){
@@ -67,6 +83,65 @@ module.exports = {
 		}
 	},
 	actions: {
+		"delete/floorImage":{
+			cache: false,
+			handler(ctx){
+				const floor = ctx.params.floor;
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				let foundIndex;
+				let fileToDel;
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project=>{
+						foundIndex = project.floorSelect.findIndex((element) => {
+							return (element.floor === floor);
+						});
+						if (foundIndex >= 0) {
+							fileToDel = project.floorSelect[foundIndex].image;
+							project.floorSelect.splice(foundIndex,1);
+							project.state.floorsImages = (project.floorSelect.length >0);
+							project.state = localLib.calcState(project);
+							return project.save()
+								.then((project) => {
+									return this.toJSON(project);
+								})
+								.then((json) => {
+									return this.populateModels(json);
+								})
+								.then((json) => {
+									this.notifyModelChanges(ctx, "updated", json);
+									return json;
+								});
+
+						} else {
+							return Promise.reject(
+								{
+									success: false,
+									message: 'No floor to delete',
+								}
+							);
+						}
+					})
+					.then(project=> {
+						return new Promise((resolve, reject) => {
+							const folders = localLib.getFoldersByProjectId(ctx.params._id, config);
+							const folder = path.resolve(folders.source, "custom");
+							fs.remove(path.resolve(folder,fileToDel), err => {
+								if (err) {
+									console.log(err);
+									reject(err);
+								} else {
+									resolve({
+										success: true,
+										message: "Floor deleted",
+										project: project,
+									});
+								}
+							});
+						});
+					});
+			}
+		},
 		"upload/floorImage":{
 			cache:false,
 			handler(ctx){

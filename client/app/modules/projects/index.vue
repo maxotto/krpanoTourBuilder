@@ -400,7 +400,26 @@
 				confirm('Are you sure you want to delete this project "' + item.title + '"?') && this.removeRow(item);
 			},
 		},
+		/**
+		 * Socket handlers. Every property is an event handler
+		 */
+		socket: {
 
+			prefix: "/counter/",
+
+			//namespace: "/counter",
+
+			events: {
+				/**
+				 * Counter value is changed
+				 * @param  {Number} msg Value of counter
+				 */
+				changed(res) {
+					console.log("Counter changed to " + res.data + (res.user ? " by " + res.user.fullName : ""));
+					// this.changedValue(res.data);
+				}
+			}
+		},
 		created() {
 			// Download rows for the page
 			this.downloadRows();

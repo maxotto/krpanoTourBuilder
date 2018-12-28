@@ -65,6 +65,7 @@
 		<v-btn small color="success" :disabled="!plan" :to="planEditorURL">Set plan&lookat</v-btn>
 		<build-dlg :id="id" :show="buildDlgShow" @closeDlg="closeBuildDlg"></build-dlg>
 		<div style="display: none">{{currentState}} Need to recalculate when state changed</div>
+		<p>{{state}}</p>
 	</div>
 </template>
 
@@ -152,7 +153,6 @@
 				this.lookat =
 					state.lookatTag;
 
-				this.plan = state.built && !state.needRebuild;
 				this.plan = state.built && !state.needRebuild;
 			}
 		},

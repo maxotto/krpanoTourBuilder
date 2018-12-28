@@ -20,7 +20,8 @@
 			</v-btn>
 		</v-snackbar>
 		<h1>Initiate project</h1>
-		<p v-if="project">{{project.floorSelect}}</p>
+		<p v-if="project">floorSelect={{project.floorSelect}}</p>
+		<p v-if="project">state={{project.state}}</p>
 		<p v-if="project">{{floorSelect}}</p>
 		<span style="color: red;"><b> {{lastError}}</b></span><br>
 		<v-stepper v-model="step" vertical v-if="project">

@@ -3,6 +3,9 @@ import toastr from "../../../core/toastr";
 import { LOAD, ADD, SELECT, CLEAR_SELECT, UPDATE, REMOVE } from "./types";
 import projectService from "./ProjectsService";
 
+import Service from "../../../core/service";
+let service = new Service("project", this);
+
 
 export const selectRow = ({ commit }, row, multiSelect) => {
 	commit(SELECT, row, multiSelect);
@@ -13,7 +16,10 @@ export const clearSelection = ({ commit }) => {
 };
 
 export const downloadRows = ({ commit }) => {
-	// console.log('downloadRows');
+	console.log('downloadRows');
+	service.emit("Download rows").then((newValue) => {
+		console.log("downloadRows after emit.");
+	});
 	projectService.fetchProjects().then((response) => {
 		let res = response.data;
 		if (res.status == 200 && res.data)

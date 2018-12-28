@@ -17,6 +17,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const KrPanoFile = require("./models/krPanoTools");
 const build = require("./models/build");
+const debug = require("debug")("projects");
 
 module.exports = {
 	settings: {
@@ -24,7 +25,7 @@ module.exports = {
 		version: 1,
 		namespace: "projects",
 		rest: true,
-		ws: false,
+		ws: true,
 		graphql: false,
 		permission: C.PERM_LOGGEDIN,
 		role: "user",
@@ -105,6 +106,7 @@ module.exports = {
 									})
 									.then((json) => {
 										this.notifyModelChanges(ctx, "updated", json);
+										logger.debug(json);
 										return Promise.resolve({
 											success: true,
 											message: "Build process is finished.",
@@ -448,6 +450,7 @@ module.exports = {
 	socket: {
 		afterConnection(socket, io) {
 			console.log("Socket connected for projects");
+			logger.debug("Socket connected for projects");
 			// Fired when a new client connected via websocket
 		}
 	},

@@ -32,6 +32,6 @@ export default {
 	buildProject(id) {
 		console.log("Start build")
 		// return Promise.resolve("XXX");
-		return axios.get("build/" + id);
+		return axios.get("api/projects/" + id + "/build");
 	}
 }

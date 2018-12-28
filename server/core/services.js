@@ -378,41 +378,40 @@ class Services extends EventEmitter {
 							
 							Promise.resolve()
 
-							// Resolve model if ID provided
-							.then(() => {
-								return ctx.resolveModel();
-							})
+								// Resolve model if ID provided
+								.then(() => {
+									return ctx.resolveModel();
+								})
 
-							// Check permission
-							.then(() => {
-								return ctx.checkPermission();
-							})
+								// Check permission
+								.then(() => {
+									return ctx.checkPermission();
+								})
 
-							// Call the action handler
-							.then(() => {
-								return action.handler(ctx);
-							})
+								// Call the action handler
+								.then(() => {
+									return action.handler(ctx);
+								})
 
-							// Response the result
-							.then((json) => {
-								if (_.isFunction(callback)) {
-									callback(response.json(null, json));
-								}
-							})
+								// Response the result
+								.then((json) => {
+									if (_.isFunction(callback)) {
+										callback(response.json(null, json));
+									}
+								})
 
-							// Response the error
-							.catch((err) => {
-								logger.error(err);
-								if (_.isFunction(callback)) {
-									callback(response.json(null, null, err));
-								}
-							})
+								// Response the error
+								.catch((err) => {
+									logger.error(err);
+									if (_.isFunction(callback)) {
+										callback(response.json(null, null, err));
+									}
+								})
 
-							.then(() => {
-								self.emit("response", ctx);
-								console.timeEnd("SOCKET request");
-							});
-
+								.then(() => {
+									self.emit("response", ctx);
+									console.timeEnd("SOCKET request");
+								});
 						};
 
 						socket.on(cmd, handler);

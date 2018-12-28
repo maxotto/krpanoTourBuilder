@@ -15,7 +15,8 @@ const unzipper = require("../../../libs/unzipper");
 const localLib = require("./models/lib");
 const fs = require("fs-extra");
 const path = require("path");
-const KrPanoFile = require('./models/krPanoTools');
+const KrPanoFile = require("./models/krPanoTools");
+const build = require("./models/build");
 
 module.exports = {
 	settings: {
@@ -23,7 +24,7 @@ module.exports = {
 		version: 1,
 		namespace: "projects",
 		rest: true,
-		ws: true,
+		ws: false,
 		graphql: false,
 		permission: C.PERM_LOGGEDIN,
 		role: "user",
@@ -72,8 +73,6 @@ module.exports = {
 			handler(ctx) {
 				this.validateParams(ctx);
 				console.log(ctx.params);
-				// /resource/projects/5c22115964a388257899f82d/getimage/fromtemplate/floorselector/?n=0&t=up
-
 				return this.collection.findById(ctx.modelID).exec()
 					.then((doc) => {
 						const imageName = ctx.params.n + "Floor" + (ctx.params.t=="up"?"Up":(ctx.params.t=="down"?"Down":ctx.params.t)) + ".jpg";
@@ -84,6 +83,38 @@ module.exports = {
 		}
 	},
 	actions: {
+		"build":{
+			cache: false,
+			handler(ctx){
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project => {
+						return build.run(project, config)
+							.then((res) => {
+								project.state.built = true;
+								project.state.lookatTag = true;
+								project.markModified("state.built");
+								project.markModified("state.lookatTag");
+								return project.save()
+									.then((project) => {
+										return this.toJSON(project);
+									})
+									.then((json) => {
+										return this.populateModels(json);
+									})
+									.then((json) => {
+										this.notifyModelChanges(ctx, "updated", json);
+										return Promise.resolve({
+											success: true,
+											message: "Build process is finished.",
+											project: json,
+										});
+									});
+							}, err => {console.log(err);});
+					}, err => {console.log(err);});
+			}
+		},
 		"delete/floorImage":{
 			cache: false,
 			handler(ctx){
@@ -416,6 +447,7 @@ module.exports = {
 
 	socket: {
 		afterConnection(socket, io) {
+			console.log("Socket connected for projects");
 			// Fired when a new client connected via websocket
 		}
 	},

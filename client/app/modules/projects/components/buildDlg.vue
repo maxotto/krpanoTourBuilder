@@ -50,16 +50,16 @@
 				this.success = false;
 				ProjectsService.buildProject(this.id)
 					.then(res => {
-						if (res.data.success) {
+						const data = res.data.data;
+						if (data.success) {
 							this.success = true;
 							alert("Project is built!");
-							this.$store.commit("setNeedToReloadCurrent", true);
 						} else {
-							this.logTxt.push(JSON.stringify(res.data.message));
+							this.logTxt.push(JSON.stringify(data.message));
 							setTimeout(() => {
 								alert("There was an error during build!");
 							}, 100);
-							console.log(res.data.message);
+							console.log(data.message);
 						}
 						this.inProcess = false;
 						this.logDiv.scrollTop = this.logDiv.scrollHeight - this.logDiv.clientHeight;

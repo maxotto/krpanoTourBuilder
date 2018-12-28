@@ -15,7 +15,8 @@ const unzipper = require("../../../libs/unzipper");
 const localLib = require("./models/lib");
 const fs = require("fs-extra");
 const path = require("path");
-const KrPanoFile = require('./models/krPanoTools');
+const KrPanoFile = require("./models/krPanoTools");
+const build = require("./models/build");
 
 module.exports = {
 	settings: {
@@ -23,7 +24,7 @@ module.exports = {
 		version: 1,
 		namespace: "projects",
 		rest: true,
-		ws: true,
+		ws: false,
 		graphql: false,
 		permission: C.PERM_LOGGEDIN,
 		role: "user",
@@ -89,8 +90,29 @@ module.exports = {
 				this.validateParams(ctx);
 				return this.collection.findById(ctx.modelID).exec()
 					.then(project => {
-
-					});
+						return build.run(project, config)
+							.then((res) => {
+								project.state.built = true;
+								project.state.lookatTag = true;
+								project.markModified("state.built");
+								project.markModified("state.lookatTag");
+								return project.save()
+									.then((project) => {
+										return this.toJSON(project);
+									})
+									.then((json) => {
+										return this.populateModels(json);
+									})
+									.then((json) => {
+										this.notifyModelChanges(ctx, "updated", json);
+										return Promise.resolve({
+											success: true,
+											message: "Build process is finished.",
+											project: json,
+										});
+									});
+							}, err => {console.log(err);});
+					}, err => {console.log(err);});
 			}
 		},
 		"delete/floorImage":{
@@ -425,6 +447,7 @@ module.exports = {
 
 	socket: {
 		afterConnection(socket, io) {
+			console.log("Socket connected for projects");
 			// Fired when a new client connected via websocket
 		}
 	},

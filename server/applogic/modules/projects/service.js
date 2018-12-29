@@ -347,6 +347,9 @@ module.exports = {
 					user: userId
 				};
 				let query = Project.find(filter);
+				setTimeout(()=>{
+					ctx.emit('test',{test: 20},ctx.user.role);
+				},10000);
 				return ctx.queryPageSort(query).exec().then( (docs) => {
 					return this.toJSON(docs);
 				});

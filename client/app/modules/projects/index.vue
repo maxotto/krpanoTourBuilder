@@ -140,6 +140,7 @@
 	import ActionButtons from "./components/actionButtons.vue";
 	import { mapGetters, mapActions } from "vuex";
 	import InitiateProject from "./components/initiateProject";
+	import Service from "../../core/service";
 	// import schema from "./__schema";
 
 	export default {
@@ -405,22 +406,18 @@
 		 */
 		socket: {
 
-			prefix: "/counter/",
+			prefix: "/projects/",
 
 			//namespace: "/counter",
 
 			events: {
-				/**
-				 * Counter value is changed
-				 * @param  {Number} msg Value of counter
-				 */
-				changed(res) {
-					console.log("Counter changed to " + res.data + (res.user ? " by " + res.user.fullName : ""));
-					// this.changedValue(res.data);
+				test(res) {
+					console.log({res});
 				}
 			}
 		},
 		created() {
+			this.$service = new Service("projects", this);
 			// Download rows for the page
 			this.downloadRows();
 			// add  new routes

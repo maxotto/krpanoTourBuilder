@@ -1,6 +1,6 @@
 const localLib = require("./lib");
 
-exports.run = function(project, main_config){
+exports.run = function(project, main_config, ctx){
 	const folders = localLib.getFoldersByProjectId(project.id, main_config);
 	const config = {
 		// socket: io,
@@ -27,12 +27,12 @@ exports.run = function(project, main_config){
 		floorSelect: project.floorSelect,
 	};
 	console.log("Builder run 1");
-	return buildMe(config);
+	return buildMe(config, ctx);
 };
 
-const buildMe = function(config){
+const buildMe = function(config, ctx){
 	console.log("inside buildMe", config.templatesFolder+'/tourBuilder');
 	const Builder = require(config.templatesFolder+'/tourBuilder');
-	const myBuilder = Builder(config, undefined);
+	const myBuilder = Builder(config, undefined, ctx);
 	return myBuilder.run();
 };

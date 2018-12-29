@@ -91,7 +91,7 @@ module.exports = {
 				this.validateParams(ctx);
 				return this.collection.findById(ctx.modelID).exec()
 					.then(project => {
-						return build.run(project, config)
+						return build.run(project, config, ctx)
 							.then((res) => {
 								project.state.built = true;
 								project.state.lookatTag = true;
@@ -348,7 +348,7 @@ module.exports = {
 				};
 				let query = Project.find(filter);
 				setTimeout(()=>{
-					ctx.emit('test',{test: 20},ctx.user.role);
+					// ctx.emit('test',{test: 20},ctx.user.role);
 				},10000);
 				return ctx.queryPageSort(query).exec().then( (docs) => {
 					return this.toJSON(docs);

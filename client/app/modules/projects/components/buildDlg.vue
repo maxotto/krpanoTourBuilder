@@ -7,7 +7,7 @@
 		<v-card>
 			<v-card-title class="headline">Build Project</v-card-title>
 			<div class="log" id="log">
-				<template v-for="row in logTxt">{{row}}<br></template>
+				<template v-for="row in buildLog">{{row}}<br></template>
 			</div>
 			<v-card-actions>
 				<v-spacer></v-spacer>
@@ -27,25 +27,29 @@
 
 <script>
 	import ProjectsService from "../store/ProjectsService";
+	import { mapGetters, mapActions } from "vuex";
 
 	export default {
 		name: "buildDlg",
 		props: ["id", "show"],
 		data() {
 			return {
-				logTxt: [],
 				logDiv: undefined,
 				inProcess: false,
 				success: false,
 			};
 		},
 		methods: {
+			...mapActions("projects", [
+				"clearBuildLog",
+				"addBuildLogMessage"
+			]),
 			closeDlg() {
-				this.logTxt = [];
+				this.clearBuildLog();
 				this.$emit("closeDlg", this.success);
 			},
 			startBuild: function () {
-				this.logTxt = [];
+				this.clearBuildLog();
 				this.inProcess = true;
 				this.success = false;
 				ProjectsService.buildProject(this.id)
@@ -53,7 +57,7 @@
 						const data = res.data.data;
 						if (data.success) {
 							this.success = true;
-							alert("Project is built!");
+							// alert("Project is built!");
 						} else {
 							this.logTxt.push(JSON.stringify(data.message));
 							setTimeout(() => {
@@ -71,15 +75,22 @@
 					});
 			},
 		},
+		computed: {
+			...mapGetters("projects", [
+				"buildLog"
+			]),
+		},
+		watch:{
+			buildLog: {
+				handler: function(val, oldVal){
+					this.logDiv.scrollTop = this.logDiv.scrollHeight;
+				},
+				deep: true,
+			},
+		},
 		mounted() {
 			this.logDiv = document.getElementById("log");
-			this.$socket.on("build", (data) => {
-				this.logTxt.push(data.message);
-				Promise.resolve().then(() => {
-					this.logDiv.scrollTop = this.logDiv.scrollHeight - this.logDiv.clientHeight;
-				});
-
-			});
+			this.logDiv.scrollTop = this.logDiv.scrollHeight - this.logDiv.clientHeight;
 		},
 	};
 </script>

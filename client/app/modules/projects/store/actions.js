@@ -6,6 +6,13 @@ import projectService from "./ProjectsService";
 import Service from "../../../core/service";
 let service = new Service("project", this);
 
+export const clearBuildLog = ({ commit }) => {
+	commit("clearBuildLog");
+};
+
+export const addBuildLogMessage = ({ commit }, message) => {
+	commit("addBuildLogMessage", message);
+};
 
 export const selectRow = ({ commit }, row, multiSelect) => {
 	commit(SELECT, row, multiSelect);

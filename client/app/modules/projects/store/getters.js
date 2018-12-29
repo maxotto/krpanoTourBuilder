@@ -13,3 +13,7 @@ export function errors(state) {
 export function success(state) {
 	return state.success;
 }
+
+export function buildLog(state) {
+	return state.buildLog;
+}

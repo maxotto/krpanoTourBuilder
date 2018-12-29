@@ -7,9 +7,19 @@ const state = {
 	selected: [],
 	errors: {},
 	success: false,
+	buildLog: [],
 };
 
 const mutations = {
+
+	clearBuildLog(state){
+		state.buildLog.splice(0);
+	},
+
+	addBuildLogMessage(state, message){
+		state.buildLog.push(message);
+	},
+
 	[LOAD] (state, models) {
 		state.rows.splice(0);
 		state.rows.push(...models);

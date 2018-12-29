@@ -7,6 +7,7 @@
 
 	"watch": [
 		"server",
+		"krpano_templates",
 		"config.js",
 		"webpack.*.config.js"
 	],

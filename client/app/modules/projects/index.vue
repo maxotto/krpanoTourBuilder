@@ -237,7 +237,8 @@
 				"projects",
 				"selected",
 				"errors",
-				"success"
+				"success",
+				"buildLog"
 			]),
 			canSaveNew(){
 				return (
@@ -278,7 +279,9 @@
 				"clearSelection",
 				"saveRow",
 				"updateRow",
-				"removeRow"
+				"removeRow",
+				"clearBuildLog",
+				"addBuildLogMessage"
 			]),
 			saveProject(data){
 				this.updateRow({
@@ -413,6 +416,10 @@
 			events: {
 				test(res) {
 					console.log({res});
+				},
+				build_log(data){
+					console.log({data});
+					this.addBuildLogMessage(data.data.message);
 				}
 			}
 		},

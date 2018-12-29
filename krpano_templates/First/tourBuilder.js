@@ -2,19 +2,25 @@ const Fs = require('fs-extra');
 const Xml2js = require('xml2js');
 const Path = require('path');
 
-module.exports = function (config, ftp_deploy) {
-	const socket = config.socket;
+module.exports = function (config, ftp_deploy, ctx) {
+	let _ctx = ctx;
 	const log = function (...args) {
 		console.log(...args);
-		let txt = '';
-		for (let i = 0; i < arguments.length; i++) {
-
-			txt += ' ' + arguments[i].toString();
-		}
-		// socket.emit('build', {message: txt});
-
+	};
+	const emit = function(data){
+		ctx.emit(
+			'build_log',
+			{
+				data: data,
+				project_id: ctx.modelID
+			},
+			_ctx.user.role
+		);
 	};
 	log('Module created with config', config);
+	emit({
+		message: "Module created with config'"
+	});
 	config.FtpConfig = ftp_deploy;
 	const inFolder = Path.resolve(config.inFolder);
 	const outFolder = Path.resolve(config.outFolder);
@@ -65,6 +71,9 @@ module.exports = function (config, ftp_deploy) {
 						} else {
 							const parts = Path.parse(file);
 							log(parts.base, 'loaded');
+							emit({
+								message: parts.base + " loaded."
+							});
 							resolve(result);
 						}
 					});
@@ -83,6 +92,10 @@ module.exports = function (config, ftp_deploy) {
 				} else {
 					const parts = Path.parse(file);
 					log(parts.base, 'saved');
+					emit({
+						message: parts.base + " saved."
+					});
+
 					resolve('done');
 				}
 			});
@@ -93,12 +106,18 @@ module.exports = function (config, ftp_deploy) {
 		const promises = [];
 		items.forEach((item) => {
 			log("Start to copy", item);
+			emit({
+				message: "Start to copy " + item + "."
+			});
 			const copyPromise = new Promise((resolve, reject) => {
 				Fs.copy(Path.resolve(source, item), Path.resolve(dest, item), err => {
 					if (err) {
 						reject(err);
 					} else {
 						log(item, "copied");
+						emit({
+							message: item + " copied."
+						});
 						resolve(item + "copied.");
 					}
 				});
@@ -172,6 +191,10 @@ module.exports = function (config, ftp_deploy) {
 			const hotspots = xml.krpano.scene[i]['hotspot'] || [];
 			if (hotspots.length === 0) {
 				log('Warning! Scene "' + xml.krpano.scene[i]['$']['name'] + '" has no hotspots!');
+				emit({
+					message: 'Warning! Scene "' + xml.krpano.scene[i]['$']['name'] + '" has no hotspots!'
+				});
+
 			}
 			hotspots.forEach((hs, hsI) => {
 				xml.krpano.scene[i]['hotspot'][hsI]['$']['linkedscene_lookat'] = 0;
@@ -389,13 +412,20 @@ module.exports = function (config, ftp_deploy) {
 
 	o.run = function () {
 		log('Start run');
+		emit({
+			message: 'Start building process...'
+		});
 		return initOutFolder().then(() => {
 			log('Files copied');
+			emit({
+				message: 'Files copied'
+			});
 			return loadXml(Path.resolve(outFolder, 'tour.xml'))
 				.then(xml => {
 					mainXML = xml;
 					xml = setIncludes(xml);
 					xml = setSkinSettings(xml);
+					// todo make the next function return PROMISE and use it
 					xml = updateScenes(xml);
 					xml = setTitle(xml);
 					return saveXml(xml, Path.resolve(outFolder, 'tour.xml'));
@@ -439,6 +469,9 @@ module.exports = function (config, ftp_deploy) {
 				})
 				.then((res) => {
 					log('Local copy is ready.');
+					emit({
+						message: 'Build is finished.'
+					});
 					if (config.FtpConfig && config.FtpConfig.run) {
 						return deploy();
 					} else {

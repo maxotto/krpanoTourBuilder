@@ -42,7 +42,8 @@
 		methods: {
 			...mapActions("projects", [
 				"clearBuildLog",
-				"addBuildLogMessage"
+				"addBuildLogMessage",
+				"updated",
 			]),
 			closeDlg() {
 				this.clearBuildLog();
@@ -58,6 +59,7 @@
 						if (data.success) {
 							this.success = true;
 							// alert("Project is built!");
+							this.updated(data.project);
 						} else {
 							this.logTxt.push(JSON.stringify(data.message));
 							setTimeout(() => {

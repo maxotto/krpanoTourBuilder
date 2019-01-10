@@ -140,6 +140,7 @@
 	import ActionButtons from "./components/actionButtons.vue";
 	import { mapGetters, mapActions } from "vuex";
 	import InitiateProject from "./components/initiateProject";
+	import PlanEditor from "./components/planEditor";
 	import Service from "../../core/service";
 	// import schema from "./__schema";
 
@@ -435,6 +436,15 @@
 					name: "iniPage",
 					props: true,
 					component: InitiateProject
+				}
+			]);
+			const planURL = "/project/planeditor/:id";
+			this.$router.addRoutes([
+				{
+					path: planURL,
+					name: "planEditorPage",
+					props: true,
+					component: PlanEditor
 				}
 			]);
 		}

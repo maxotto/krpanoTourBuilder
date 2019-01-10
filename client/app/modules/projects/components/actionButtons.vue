@@ -62,7 +62,13 @@
 		>
 			Build
 		</v-btn>
-		<v-btn small color="success" :disabled="!plan" :to="planEditorURL">Set plan&lookat</v-btn>
+		<v-btn
+			small
+			color="success"
+			:disabled="!plan"
+			:to="planEditorURL">
+			Set plan&lookat
+		d</v-btn>
 		<build-dlg :id="id" :show="buildDlgShow" @closeDlg="closeBuildDlg"></build-dlg>
 		<div style="display: none">{{currentState}} Need to recalculate when state changed</div>
 		<p>{{state}}</p>
@@ -134,7 +140,7 @@
 				});
 			},
 			setPlanEditor() {
-				this.planEditorURL = "/project/" + this.id;
+				this.planEditorURL = "/project/planeditor/" + this.id;
 			},
 			setiniURL() {
 				this.iniURL = "/projects/ini/" + this.id;

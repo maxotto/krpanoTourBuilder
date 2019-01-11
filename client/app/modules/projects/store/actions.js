@@ -6,6 +6,21 @@ import projectService from "./ProjectsService";
 import Service from "../../../core/service";
 let service = new Service("project", this);
 
+export const getPlanEditInfo = ({commit}, id) => {
+	projectService.getPlanEditData(id)
+		.then(response => {
+			let res = response.data;
+			if (res.status === 200 && res.data){
+				commit("setPlanEditInfo", res.data);
+			} else {
+				console.log("Status is not 200!", response);
+			}
+		})
+		.catch((response) => {
+			console.error("Request error!", response.statusText);
+		});
+};
+
 export const clearBuildLog = ({ commit }) => {
 	commit("clearBuildLog");
 };

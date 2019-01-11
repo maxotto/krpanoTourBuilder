@@ -16,6 +16,7 @@ const localLib = require("./models/lib");
 const fs = require("fs-extra");
 const path = require("path");
 const KrPanoFile = require("./models/krPanoTools");
+const xmlReader = require("./models/xmlReader");
 const build = require("./models/build");
 const debug = require("debug")("projects");
 
@@ -81,9 +82,33 @@ module.exports = {
 						return Promise.resolve(path.resolve(templateFolder, "ext", "tour", imageName));
 					});
 			}
-		}
+		},
+		"getimage/fromtemplate/radar": {
+			cache: true,
+			handler(ctx) {
+				this.validateParams(ctx);
+				console.log(ctx.params);
+				return this.collection.findById(ctx.modelID).exec()
+					.then((doc) => {
+						const templateFolder = localLib.getImagePathByTemplate(doc.template, config);
+						return Promise.resolve(path.resolve(templateFolder, "ext", "tour", "camicon.png"));
+					});
+			}
+		},
 	},
 	actions: {
+		"getplaneditdata":{
+			cache: false,
+			handler(ctx){
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project => {
+						const reader = new xmlReader(config, ctx.modelID);
+						return reader.read();
+					});
+			}
+		},
 		"build":{
 			cache: false,
 			handler(ctx){

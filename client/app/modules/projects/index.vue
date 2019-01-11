@@ -140,7 +140,7 @@
 	import ActionButtons from "./components/actionButtons.vue";
 	import { mapGetters, mapActions } from "vuex";
 	import InitiateProject from "./components/initiateProject";
-	import PlanEditor from "./components/planEditor";
+	import PlanLookatEditor from "./components/planLookatEditor";
 	import Service from "../../core/service";
 	// import schema from "./__schema";
 
@@ -444,7 +444,7 @@
 					path: planURL,
 					name: "planEditorPage",
 					props: true,
-					component: PlanEditor
+					component: PlanLookatEditor
 				}
 			]);
 		}

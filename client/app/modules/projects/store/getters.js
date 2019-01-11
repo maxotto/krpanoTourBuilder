@@ -17,3 +17,7 @@ export function success(state) {
 export function buildLog(state) {
 	return state.buildLog;
 }
+
+export function planEditInfo(state) {
+	return state.planEditInfo;
+}

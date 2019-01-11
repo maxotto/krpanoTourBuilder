@@ -8,9 +8,14 @@ const state = {
 	errors: {},
 	success: false,
 	buildLog: [],
+	planEditInfo: {}
 };
 
 const mutations = {
+
+	setPlanEditInfo(state, info){
+		state.planEditInfo = info;
+	},
 
 	clearBuildLog(state){
 		state.buildLog.splice(0);

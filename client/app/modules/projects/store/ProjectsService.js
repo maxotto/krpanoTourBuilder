@@ -17,6 +17,10 @@ export default {
 		return axios.get("api/projects/" + id);
 	},
 
+	getPlanEditData(id){
+		return axios.get("api/projects/" + id + "/getplaneditdata");
+	},
+
 	getProjectXml(id) {
 		return axios.get("api/projects/" + id + "/xml");
 	},
@@ -34,4 +38,6 @@ export default {
 		// return Promise.resolve("XXX");
 		return axios.get("api/projects/" + id + "/build");
 	}
-}
+
+
+};

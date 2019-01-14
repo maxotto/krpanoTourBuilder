@@ -4,7 +4,6 @@
 			<v-layout row wrap>
 				<v-flex xs2>
 					<div>
-						<p>Saving: {{saving}}</p>
 						<p>X: {{x}}, Y: {{y}}</p>
 						<p>Radar angle: {{angle}}</p>
 						<v-btn
@@ -15,7 +14,7 @@
 						>
 							Save job
 						</v-btn>
-						<p>{{error}}</p>
+						<p>{{errors}}</p>
 						<img style="border:6px solid green; background-color: #0c82df" id="scene-img" src=""/>
 
 					</div>
@@ -87,11 +86,9 @@
 		},
 		computed: {
 			...mapGetters("projects", [
-				"saving"
+				"saving",
+				"errors"
 			]),
-			error() {
-				return this.$store.getters["getError"];
-			}
 		},
 		methods: {
 			...mapActions("projects", [
@@ -99,8 +96,6 @@
 			]),
 			saveJob() {
 				this.saveFloorJob({id: this.id, floor: this.floor, hotspots: this.hotspots});
-				// this.$store.dispatch("saveFloorJob", {id: this.id, floor: this.floor, hotspots: this.hotspots});
-
 			},
 			updateHotSpots: function (floor) {
 				this.hotspots = [...this.xmlData[floor]["hotspots"]];

@@ -17,6 +17,7 @@ const fs = require("fs-extra");
 const path = require("path");
 const KrPanoFile = require("./models/krPanoTools");
 const xmlReader = require("./models/xmlReader");
+const xmlWriter = require("./models/xmlSaver");
 const build = require("./models/build");
 const debug = require("debug")("projects");
 
@@ -97,6 +98,22 @@ module.exports = {
 		},
 	},
 	actions: {
+		"saveplaneditdata":{
+			cache: false,
+			handler(ctx){
+				ctx.assertModelIsExist(ctx.t("app:ProjectNotFound"));
+				this.validateParams(ctx);
+				return this.collection.findById(ctx.modelID).exec()
+					.then(project => {
+						console.log(ctx.params);
+						const writer = new xmlWriter(config, ctx.modelID, ctx.params, ctx.params.type);
+						return writer.write();
+					})
+					.then(result => {return Promise.resolve(result);}, err=> {console.log({err});})
+					.catch(err => {console.log(err)});
+
+			}
+		},
 		"getplaneditdata":{
 			cache: false,
 			handler(ctx){

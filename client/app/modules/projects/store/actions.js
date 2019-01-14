@@ -6,6 +6,11 @@ import projectService from "./ProjectsService";
 import Service from "../../../core/service";
 let service = new Service("project", this);
 
+export const saveFloorJob = ({commit}, data) => {
+	console.log({data});
+	projectService.savePlanEditData(data.id, data);
+};
+
 export const getPlanEditInfo = ({commit}, id) => {
 	projectService.getPlanEditData(id)
 		.then(response => {

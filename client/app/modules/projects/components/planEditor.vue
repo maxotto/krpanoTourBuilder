@@ -30,6 +30,7 @@
 						</canvas>
 					</div>
 				</v-flex>
+				{{xmlData}}
 			</v-layout>
 		</v-container>
 	</v-app>
@@ -93,8 +94,12 @@
 			}
 		},
 		methods: {
+			...mapActions("projects", [
+				"saveFloorJob"
+			]),
 			saveJob() {
-				this.$store.dispatch("saveFloorJob", {id: this.id, floor: this.floor, hotspots: this.hotspots});
+				this.saveFloorJob({id: this.id, floor: this.floor, hotspots: this.hotspots});
+				// this.$store.dispatch("saveFloorJob", {id: this.id, floor: this.floor, hotspots: this.hotspots});
 
 			},
 			updateHotSpots: function (floor) {

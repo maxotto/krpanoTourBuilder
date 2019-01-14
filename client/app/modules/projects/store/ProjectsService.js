@@ -21,6 +21,14 @@ export default {
 		return axios.get("api/projects/" + id + "/getplaneditdata");
 	},
 
+	savePlanEditData(id, data){
+		let dataType = "floor";
+		if(data.dataType){
+			dataType = data.dataType;
+		}
+		return axios.post("api/projects/" + id + "/saveplaneditdata?type=" + dataType, data);
+	},
+
 	getProjectXml(id) {
 		return axios.get("api/projects/" + id + "/xml");
 	},

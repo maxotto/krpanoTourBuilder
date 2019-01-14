@@ -4,6 +4,7 @@
 			<v-layout row wrap>
 				<v-flex xs2>
 					<div>
+						<p>Saving: {{saving}}</p>
 						<p>X: {{x}}, Y: {{y}}</p>
 						<p>Radar angle: {{angle}}</p>
 						<v-btn
@@ -30,7 +31,6 @@
 						</canvas>
 					</div>
 				</v-flex>
-				{{xmlData}}
 			</v-layout>
 		</v-container>
 	</v-app>
@@ -86,9 +86,9 @@
 			};
 		},
 		computed: {
-			saving() {
-				return this.$store.getters["getSaving"];
-			},
+			...mapGetters("projects", [
+				"saving"
+			]),
 			error() {
 				return this.$store.getters["getError"];
 			}
@@ -272,7 +272,7 @@
 						this.ctx.drawImage(this.img, 0, 0);
 						this.drawHotSpots();
 						this.drawRadar();
-						if (this.frames > 10) this.valid = true;
+						if (this.frames > 25) this.valid = true;
 					}
 				}
 			}

@@ -7,8 +7,11 @@ import Service from "../../../core/service";
 let service = new Service("project", this);
 
 export const saveFloorJob = ({commit}, data) => {
-	console.log({data});
-	projectService.savePlanEditData(data.id, data);
+	commit('setSaving', true);
+	projectService.savePlanEditData(data.id, data)
+		.then(result => {
+			commit('setSaving', false);
+		});
 };
 
 export const getPlanEditInfo = ({commit}, id) => {

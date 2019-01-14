@@ -1,9 +1,6 @@
 <template>
 	<v-app>
 		<h1>Plan editor</h1>
-		<p>ID={{id}}</p>
-		<p>Floor={{floor}}</p>
-		<p>Items={{items}}</p>
 		<v-container fluid>
 			<v-tabs
 				slider-color="green"

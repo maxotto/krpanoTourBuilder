@@ -107,10 +107,49 @@ module.exports = {
 					.then(project => {
 						console.log(ctx.params);
 						const writer = new xmlWriter(config, ctx.modelID, ctx.params, ctx.params.type);
-						return writer.write();
+						return writer.write()
+							.then(res => {
+								return localLib.checkTour(ctx.modelID, config)
+									.then((xml) => {
+										if (xml === false){
+											return Promise.reject("XML is not valid after setting floor hotspots");
+										} else {
+											project.tour = JSON.stringify(xml);
+											return Promise.resolve(project);
+										}
+									})
+									.then((project) => {
+										return project.save()
+											.then((project) => {
+												return this.toJSON(project);
+											})
+											.then((json) => {
+												return this.populateModels(json);
+											})
+											.then((json) => {
+												this.notifyModelChanges(ctx, "updated", json);
+												return {
+													operation: "savePlanHotspots",
+													success: true,
+													project: json,
+												};
+											});
+									}, err => {
+										console.log(err);
+										return Promise.resolve({
+											operation: "savePlanHotspots",
+											success: false,
+											error: err,
+										});
+									});
+							});
 					})
-					.then(result => {return Promise.resolve(result);}, err=> {console.log({err});})
-					.catch(err => {console.log(err)});
+					.then(
+						result => {
+							return Promise.resolve(result);
+						}, 
+						err=> {console.log({err});})
+					.catch(err => {console.log(err);});
 
 			}
 		},

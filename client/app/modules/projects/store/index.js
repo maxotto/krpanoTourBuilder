@@ -8,10 +8,15 @@ const state = {
 	errors: {},
 	success: false,
 	buildLog: [],
-	planEditInfo: {}
+	planEditInfo: {},
+	saving: false
 };
 
 const mutations = {
+
+	setSaving(state,  val){
+		state.saving = val;
+	},
 
 	setPlanEditInfo(state, info){
 		state.planEditInfo = info;

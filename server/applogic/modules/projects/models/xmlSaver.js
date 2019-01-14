@@ -128,20 +128,15 @@ module.exports = function (config, id, data, dataType) {
 	const writer = {};
 
 	const floorSaver = function () {
-		console.log("floorSaver 1");
 		return loadXml(floorMapXmlPath)
 			.then(xml => {
-				console.log("floorSaver 2");
 				const updated = updateXml(xml, data);
 				return saveXml(updated, floorMapXmlPath);
 			})
 			.then((message) => {
-				console.log("floorSaver 3");
-				console.log(message);
 				return loadXml(tourXmlPath);
 			})
 			.then(tourXml => {
-				console.log("floorSaver 4");
 				const updated = updateMainTour(tourXml, data);
 				return saveXml(updated, tourXmlPath);
 			});

@@ -21,3 +21,7 @@ export function buildLog(state) {
 export function planEditInfo(state) {
 	return state.planEditInfo;
 }
+
+export function saving(state){
+	return state.saving;
+}
